@@ -954,7 +954,7 @@ class Frame_2D:
         # Compile all load forces
         forces: dict[int, list[float]] = {key: [0, 0, 0] for key in nodes}
         for member in members_list:
-            member.Resolve_Forces_into_Components()
+            member._Resolve_Forces_into_Components()
             member_forces_temp = member.resolved_forces
 
             for key in forces:
@@ -986,7 +986,7 @@ class Frame_2D:
         # Compile all plot loadings per member
         plot_loadings = {}
         for member in members_list:
-            plot_loading = member.Assemble_Plot_Loadings()
+            plot_loading = member._Assemble_Plot_Loadings()
             plot_loadings.update(plot_loading)
 
         self.nodes = nodes
@@ -1515,13 +1515,13 @@ class Frame_2D:
 
     def __Update_Member_Local_Forces(self):
         for element, member in enumerate(self.members_list):
-            member.Reaction_Add_Axial_At_Left_Support(
+            member._Reaction_Add_Axial_At_Left_Support(
                 self.solved_member_forces[element + 1][0]
             )
-            member.Reaction_Add_Shear_At_Left_Support(
+            member._Reaction_Add_Shear_At_Left_Support(
                 self.solved_member_forces[element + 1][1]
             )
-            member.Reaction_Add_Moment_At_Left_Support(
+            member._Reaction_Add_Moment_At_Left_Support(
                 self.solved_member_forces[element + 1][2]
             )
 
@@ -2396,7 +2396,7 @@ class Frame_2D:
                 x_final,
                 y_final,
                 "b-",
-                linewidth=linewidth * np.array(areas[member]) / average_area,
+                # linewidth=linewidth * areas[member] / average_area,
             )
 
             moment = np.insert(member.moment, 0, x[0])
@@ -2476,7 +2476,7 @@ class Frame_2D:
                 marker="o",
                 color="black",
                 zorder=5,
-                linewidth=linewidth * np.array(areas[element]) / average_area,
+                # linewidth=linewidth * np.array(areas[element]) / average_area,
                 markersize=node_size,
             )
             middlePoint = [
@@ -2533,7 +2533,7 @@ class Frame_2D:
                 x_final,
                 y_final,
                 "m-",
-                linewidth=linewidth * np.array(areas[member]) / average_area,
+                # linewidth=linewidth * areas[member] / average_area,
             )
 
             shear = np.insert(member.shear, 0, x[0])
@@ -2613,7 +2613,7 @@ class Frame_2D:
                 marker="o",
                 color="black",
                 zorder=5,
-                linewidth=linewidth * np.array(areas[element]) / average_area,
+                # linewidth=linewidth * np.array(areas[element]) / average_area,
                 markersize=node_size,
             )
             middlePoint = [
@@ -2670,7 +2670,7 @@ class Frame_2D:
                 x_final,
                 y_final,
                 "r-",
-                linewidth=linewidth * np.array(areas[member]) / average_area,
+                # linewidth=linewidth * areas[element] / average_area,
             )
 
             axial = np.insert(member.axial, 0, x[0])
@@ -2775,7 +2775,7 @@ class Frame_2D:
                 marker="o",
                 color="black",
                 zorder=5,
-                linewidth=linewidth * np.array(areas[element]) / average_area,
+                # linewidth=linewidth * np.array(areas[element]) / average_area,
                 markersize=node_size,
             )
 
