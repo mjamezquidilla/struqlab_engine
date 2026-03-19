@@ -1,7 +1,8 @@
-import numpy as np 
-import matplotlib.pyplot as plt 
-from matplotlib.patches import Arc, RegularPolygon, Polygon
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import Arc, Polygon, RegularPolygon
 from numpy import radians as rad
+
 # plt.style.use('fivethirtyeight')
 # plt.rcParams['hatch.color'] = 'white'
 # print("Positive Values for forces: right, up (righthand rule)")
@@ -14,12 +15,21 @@ from numpy import radians as rad
 
 
 class Member_2D:
-    def __init__(self, area, elasticity, inertia, nodes = {}, member_number = None,  moment_release = [0,0], no_of_divs = 11):
-        self.member_number:int = member_number
+    def __init__(
+        self,
+        area,
+        elasticity,
+        inertia,
+        nodes={},
+        member_number=None,
+        moment_release=[0, 0],
+        no_of_divs=11,
+    ):
+        self.member_number: int = member_number
         self.area: float = area
         self.inertia: float = inertia
         self.elasticity: float = elasticity
-        
+
         self.moment_release_left: int = moment_release[0]
         self.moment_release_right: int = moment_release[1]
         self.no_of_divs: int = no_of_divs
@@ -31,7 +41,6 @@ class Member_2D:
         self.uniform_full_load_fx: list = []
         self.uniform_full_load_fy: list = []
 
-        
         # Check if nodes dictionary is not empty
         if nodes:
             self.nodes = nodes
@@ -47,19 +56,21 @@ class Member_2D:
             y1 = coordinates[0][1]
             x2 = coordinates[1][0]
             y2 = coordinates[1][1]
-            self.length = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+            self.length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
             # create empty force vectors for each node
             self.forces = {}
             for node in nodes:
-                self.forces.update({node: [0,0,0]})
+                self.forces.update({node: [0, 0, 0]})
 
             # Create Shear and Moment numpy arrays
-            self.division_spacing = self.length/no_of_divs
-            self.x_array = np.linspace(0,self.length,int(np.ceil(self.length)/self.division_spacing))
-            self.axial = np.zeros(int(np.ceil(self.length)/self.division_spacing))
-            self.shear = np.zeros(int(np.ceil(self.length)/self.division_spacing))
-            self.moment = np.zeros(int(np.ceil(self.length)/self.division_spacing))
+            self.division_spacing = self.length / no_of_divs
+            self.x_array = np.linspace(
+                0, self.length, int(np.ceil(self.length) / self.division_spacing)
+            )
+            self.axial = np.zeros(int(np.ceil(self.length) / self.division_spacing))
+            self.shear = np.zeros(int(np.ceil(self.length) / self.division_spacing))
+            self.moment = np.zeros(int(np.ceil(self.length) / self.division_spacing))
 
             # Plotting Member Releases
             self.__Release_Node_Coordinates()
@@ -68,18 +79,18 @@ class Member_2D:
         # Reinitialize forces dictionary
         self.forces = {}
         for node in self.nodes:
-            self.forces.update({node: [0,0,0]})
-        
+            self.forces.update({node: [0, 0, 0]})
+
         # Insert the points of interest into x_array
         for a in self.points_of_interest:
             index = np.searchsorted(self.x_array, a)
             self.x_array = np.insert(self.x_array, index, a)
-            
-            before = np.searchsorted(self.x_array, a-0.001)
-            self.x_array = np.insert(self.x_array, before, a-0.001)
-            
-            after = np.searchsorted(self.x_array, a+0.001)
-            self.x_array = np.insert(self.x_array, after, a+0.001)
+
+            before = np.searchsorted(self.x_array, a - 0.001)
+            self.x_array = np.insert(self.x_array, before, a - 0.001)
+
+            after = np.searchsorted(self.x_array, a + 0.001)
+            self.x_array = np.insert(self.x_array, after, a + 0.001)
 
         # Re-initialize axial, shear, and moment arrays based on length of x_array
         self.axial = np.zeros(len(self.x_array))
@@ -88,10 +99,10 @@ class Member_2D:
         # Recompute the axial, moment and shear values based on new x_array
         for p in self.point_load:
             self.Add_Load_Point(p[0], p[1])
-        
+
         for w in self.uniform_full_load:
             self.Add_Load_Full_Uniform(w, False)
-            
+
         for a in self.uniform_axial_load:
             self.Add_Load_Axial_Uniform(a)
 
@@ -129,7 +140,7 @@ class Member_2D:
         y1 = coordinates[0][1]
         x2 = coordinates[1][0]
         y2 = coordinates[1][1]
-        self.length = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+        self.length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
         c = (x2 - x1) / self.length
         s = (y2 - y1) / self.length
 
@@ -147,7 +158,6 @@ class Member_2D:
             self.release_node_coordinates[0][1] += node_vert
             self.release_node_coordinates[1][0] -= node_hor
             self.release_node_coordinates[1][1] -= node_vert
-            
 
     def Add_Nodes_To_Element(self, element, nodes):
         from_node = element[0]
@@ -168,43 +178,44 @@ class Member_2D:
         y1 = coordinates[0][1]
         x2 = coordinates[1][0]
         y2 = coordinates[1][1]
-        self.length = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+        self.length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
         # create empty force vectors for each node
         self.forces = {}
         for node in self.nodes:
-            self.forces.update({node: [0,0,0]})
+            self.forces.update({node: [0, 0, 0]})
 
         # Create Shear and Moment numpy arrays
-        self.division_spacing = self.length/self.no_of_divs
-        self.x_array = np.linspace(0,self.length,int(np.ceil(self.length)/self.division_spacing))
-        self.axial = np.zeros(int(np.ceil(self.length)/self.division_spacing))
-        self.shear = np.zeros(int(np.ceil(self.length)/self.division_spacing))
-        self.moment = np.zeros(int(np.ceil(self.length)/self.division_spacing))
+        self.division_spacing = self.length / self.no_of_divs
+        self.x_array = np.linspace(
+            0, self.length, int(np.ceil(self.length) / self.division_spacing)
+        )
+        self.axial = np.zeros(int(np.ceil(self.length) / self.division_spacing))
+        self.shear = np.zeros(int(np.ceil(self.length) / self.division_spacing))
+        self.moment = np.zeros(int(np.ceil(self.length) / self.division_spacing))
 
         self.__Release_Node_Coordinates()
 
-
-    def Add_Load_Axial_Uniform(self, w, skip_part = False): # OKAY!
+    def Add_Load_Axial_Uniform(self, w, skip_part=False):  # OKAY!
         L = self.length
         beginning_axial = w * L / 2
         end_axial = w * L / 2
-        
+
         self.forces[self.node_list[0]][0] += beginning_axial
         self.forces[self.node_list[1]][0] += end_axial
 
         # Axial Values
         axial_values = self.x_array.copy()
         for index, x in enumerate(axial_values):
-            axial_values[index] = w*x - beginning_axial
+            axial_values[index] = w * x - beginning_axial
 
-        self.axial += axial_values        
+        self.axial += axial_values
 
         if not skip_part:
             if w not in self.uniform_axial_load:
                 self.uniform_axial_load.append(w)
 
-    def Add_Self_Weight(self, unit_weight): # OKAY!
+    def Add_Self_Weight(self, unit_weight):  # OKAY!
         w = unit_weight * self.area
 
         nodes = self.nodes
@@ -216,10 +227,10 @@ class Member_2D:
         x2 = coordinates[1][0]
         y2 = coordinates[1][1]
         L = self.length
-        
+
         c = (x2 - x1) / L
         s = (y2 - y1) / L
-        
+
         # if x2 >= x1 and y2 >= y1: # 1st quadrant
         #     w1 = w * c
         #     w2 = -w * s
@@ -238,12 +249,11 @@ class Member_2D:
 
         self.Add_Load_Full_Uniform(w1, True)
         self.Add_Load_Axial_Uniform(w2, True)
-        
+
         if unit_weight not in self.self_weight:
             self.self_weight.append(unit_weight)
 
-
-    def Add_Load_Full_Uniform_Fy(self, w): # OKAY!
+    def Add_Load_Full_Uniform_Fy(self, w):  # OKAY!
         nodes = self.nodes
         coordinates = []
         for node in nodes:
@@ -253,21 +263,20 @@ class Member_2D:
         x2 = coordinates[1][0]
         y2 = coordinates[1][1]
         L = self.length
-        
+
         c = (x2 - x1) / L
         s = (y2 - y1) / L
 
         w1 = w * c
-        w2 = -w * s 
+        w2 = -w * s
 
         self.Add_Load_Full_Uniform(-w1, True)
         self.Add_Load_Axial_Uniform(-w2, True)
-        
+
         if w not in self.uniform_full_load_fy:
             self.uniform_full_load_fy.append(w)
 
-    
-    def Add_Load_Full_Uniform_Fx(self, w): # OKAY!
+    def Add_Load_Full_Uniform_Fx(self, w):  # OKAY!
         nodes = self.nodes
         coordinates = []
         for node in nodes:
@@ -277,7 +286,7 @@ class Member_2D:
         x2 = coordinates[1][0]
         y2 = coordinates[1][1]
         L = self.length
-        
+
         # if x2 <= x1 and y2 <= y1:
         #     x2new = x1
         #     x1new = x2
@@ -287,52 +296,50 @@ class Member_2D:
         #     y1new = y2
         #     y2 = y2new
         #     y1 = y1new
-            
+
         c = (x2 - x1) / L
         s = (y2 - y1) / L
 
-        w1 = w * s        
-        w2 = w * c 
+        w1 = w * s
+        w2 = w * c
 
         self.Add_Load_Full_Uniform(w1, True)
         self.Add_Load_Axial_Uniform(w2, True)
-    
+
         if w not in self.uniform_full_load_fx:
             self.uniform_full_load_fx.append(w)
 
-
-    def Add_Load_Point(self, P, a): # OKAY
+    def Add_Load_Point(self, P, a):  # OKAY
         L = self.length
-        beginning_moment = P * (L-a)**2 * a / L**2
-        end_moment = -P * a**2 * (L-a)/L**2
-        beginning_shear = (P*(L-a) + beginning_moment + end_moment) / L
-        end_shear = (-P*a + end_moment + beginning_moment) / L
+        beginning_moment = P * (L - a) ** 2 * a / L**2
+        end_moment = -P * a**2 * (L - a) / L**2
+        beginning_shear = (P * (L - a) + beginning_moment + end_moment) / L
+        end_shear = (-P * a + end_moment + beginning_moment) / L
 
         if self.moment_release_left == 1 and self.moment_release_right == 0:
-            beginning_shear = (beginning_shear - 3 / (2*L) * beginning_moment)
-            end_shear = (-end_shear + 3 / (2*L) * beginning_moment)
+            beginning_shear = beginning_shear - 3 / (2 * L) * beginning_moment
+            end_shear = -end_shear + 3 / (2 * L) * beginning_moment
             end_moment = end_moment - 1 / 2 * beginning_moment
-            self.forces[self.node_list[0]][1] += - beginning_shear
-            self.forces[self.node_list[1]][1] += - end_shear
+            self.forces[self.node_list[0]][1] += -beginning_shear
+            self.forces[self.node_list[1]][1] += -end_shear
             self.forces[self.node_list[1]][2] += end_moment
         elif self.moment_release_left == 0 and self.moment_release_right == 1:
-            beginning_shear = (beginning_shear - 3 / (2*L) * end_moment)
-            end_shear = (-end_shear + 3 / (2*L) * end_moment)
+            beginning_shear = beginning_shear - 3 / (2 * L) * end_moment
+            end_shear = -end_shear + 3 / (2 * L) * end_moment
             beginning_moment = beginning_moment - 1 / 2 * end_moment
-            self.forces[self.node_list[0]][1] += - beginning_shear
-            self.forces[self.node_list[1]][1] += - end_shear
+            self.forces[self.node_list[0]][1] += -beginning_shear
+            self.forces[self.node_list[1]][1] += -end_shear
             self.forces[self.node_list[0]][2] += beginning_moment
         elif self.moment_release_right == 1 and self.moment_release_right == 1:
-            beginning_shear = (beginning_shear - 1 / L * (beginning_moment + end_moment))
-            end_shear = (-end_shear + 1 / L * (beginning_moment + end_moment))
-            self.forces[self.node_list[0]][1] += - beginning_shear
-            self.forces[self.node_list[1]][1] += - end_shear
+            beginning_shear = beginning_shear - 1 / L * (beginning_moment + end_moment)
+            end_shear = -end_shear + 1 / L * (beginning_moment + end_moment)
+            self.forces[self.node_list[0]][1] += -beginning_shear
+            self.forces[self.node_list[1]][1] += -end_shear
         else:
-            self.forces[self.node_list[0]][1] += - beginning_shear
+            self.forces[self.node_list[0]][1] += -beginning_shear
             self.forces[self.node_list[1]][1] += end_shear
             self.forces[self.node_list[0]][2] += beginning_moment
             self.forces[self.node_list[1]][2] += end_moment
-
 
         # Shear Values
         shear_values = self.x_array.copy()
@@ -351,68 +358,72 @@ class Member_2D:
         moment_values = self.x_array.copy()
         for index, x in enumerate(self.x_array):
             if x <= a:
-                moment_values[index] = beginning_moment  - beginning_shear * x
+                moment_values[index] = beginning_moment - beginning_shear * x
             else:
-                moment_values[index] = beginning_moment  - beginning_shear * x + P * (x - a)
-        self.moment += moment_values    
+                moment_values[index] = (
+                    beginning_moment - beginning_shear * x + P * (x - a)
+                )
+        self.moment += moment_values
 
         if a not in self.points_of_interest:
             self.points_of_interest.append(a)
-            self.point_load.append([P,a])
-   
-   
-    def Add_Load_Full_Uniform(self, w, skip_part=False): # OKAY!
+            self.point_load.append([P, a])
+
+    def Add_Load_Full_Uniform(self, w, skip_part=False):  # OKAY!
         L = self.length
-        
+
         beginning_moment = w * L**2 / 12
         end_moment = -w * L**2 / 12
         beginning_shear = w * L / 2
         end_shear = w * L / 2
-    
+
         if self.moment_release_left == 1 and self.moment_release_right == 0:
-            beginning_shear = (beginning_shear - 3 / (2*L) * beginning_moment)
-            end_shear = (end_shear + 3 / (2*L) * beginning_moment)
+            beginning_shear = beginning_shear - 3 / (2 * L) * beginning_moment
+            end_shear = end_shear + 3 / (2 * L) * beginning_moment
             end_moment = end_moment - 1 / 2 * beginning_moment
-            self.forces[self.node_list[0]][1] += - beginning_shear
-            self.forces[self.node_list[1]][1] += - end_shear
+            self.forces[self.node_list[0]][1] += -beginning_shear
+            self.forces[self.node_list[1]][1] += -end_shear
             self.forces[self.node_list[1]][2] += end_moment
         elif self.moment_release_left == 0 and self.moment_release_right == 1:
-            beginning_shear = (beginning_shear - 3 / (2*L) * end_moment)
-            end_shear = (end_shear + 3 / (2*L) * end_moment)
+            beginning_shear = beginning_shear - 3 / (2 * L) * end_moment
+            end_shear = end_shear + 3 / (2 * L) * end_moment
             beginning_moment = beginning_moment - 1 / 2 * end_moment
-            self.forces[self.node_list[0]][1] += - beginning_shear
-            self.forces[self.node_list[1]][1] += - end_shear
+            self.forces[self.node_list[0]][1] += -beginning_shear
+            self.forces[self.node_list[1]][1] += -end_shear
             self.forces[self.node_list[0]][2] += beginning_moment
         elif self.moment_release_right == 1 and self.moment_release_right == 1:
-            beginning_shear = (beginning_shear - 1 / L * (beginning_moment + end_moment))
-            end_shear = (end_shear + 1 / L * (beginning_moment + end_moment))
-            self.forces[self.node_list[0]][1] += - beginning_shear
-            self.forces[self.node_list[1]][1] += - end_shear
+            beginning_shear = beginning_shear - 1 / L * (beginning_moment + end_moment)
+            end_shear = end_shear + 1 / L * (beginning_moment + end_moment)
+            self.forces[self.node_list[0]][1] += -beginning_shear
+            self.forces[self.node_list[1]][1] += -end_shear
         else:
-            self.forces[self.node_list[0]][1] += - beginning_shear
-            self.forces[self.node_list[1]][1] += - end_shear
+            self.forces[self.node_list[0]][1] += -beginning_shear
+            self.forces[self.node_list[1]][1] += -end_shear
             self.forces[self.node_list[0]][2] += beginning_moment
             self.forces[self.node_list[1]][2] += end_moment
-        
+
         # Shear Values
         shear_values = self.x_array.copy()
         for index, shear_value in enumerate(shear_values):
             shear_values[index] = beginning_shear - w * shear_value
-        
+
         # Moment Values
         if self.moment_release_left == 1:
             beginning_moment = 0
         moment_values = self.x_array.copy()
         for index, moment_value in enumerate(moment_values):
-            moment_values[index] = beginning_moment - beginning_shear * moment_value + w * moment_value**2 / 2
+            moment_values[index] = (
+                beginning_moment
+                - beginning_shear * moment_value
+                + w * moment_value**2 / 2
+            )
 
         self.shear += shear_values
         self.moment += moment_values
-        
+
         if not skip_part:
             if w not in self.uniform_full_load:
                 self.uniform_full_load.append(w)
-
 
     # def Add_Load_Moment(self,M,a): #TODO Recheck values for all quadrants
     #     L = self.length
@@ -432,7 +443,6 @@ class Member_2D:
     #         self.forces[self.node_list[0]][2] += beginning_moment
     #         self.forces[self.node_list[1]][2] += end_moment
 
-        
     #     # Moment Values
     #     if self.moment_release_left == 1:
     #         beginning_moment = 0
@@ -441,36 +451,41 @@ class Member_2D:
     #         moment_values[index] = beginning_moment
     #     self.moment += moment_values
 
-
-    def Add_Load_Partial_Uniform(self, w, a, b): #TODO Recheck values for all quadrants
+    def Add_Load_Partial_Uniform(
+        self, w, a, b
+    ):  # TODO Recheck values for all quadrants
         L = self.length
-        beginning_moment = w*L**2/12 * (6*(b/L)**2 - 8*(b/L)**3 + 3*(b/L)**4) - w*L**2/12 * (6*(a/L)**2 - 8*(a/L)**3 + 3*(a/L)**4)
-        end_moment =  - w*L**2/12 * (4*(b/L)**3 - 3*(b/L)**4) + w*L**2/12 * (4*(a/L)**3 - 3*(a/L)**4)
-        beginning_shear = w * (b-a) / L * ((b-a)/2 + (L-b)) 
-        end_shear = w * (b-a) / L * ((b-a)/2 + a) 
+        beginning_moment = w * L**2 / 12 * (
+            6 * (b / L) ** 2 - 8 * (b / L) ** 3 + 3 * (b / L) ** 4
+        ) - w * L**2 / 12 * (6 * (a / L) ** 2 - 8 * (a / L) ** 3 + 3 * (a / L) ** 4)
+        end_moment = -w * L**2 / 12 * (
+            4 * (b / L) ** 3 - 3 * (b / L) ** 4
+        ) + w * L**2 / 12 * (4 * (a / L) ** 3 - 3 * (a / L) ** 4)
+        beginning_shear = w * (b - a) / L * ((b - a) / 2 + (L - b))
+        end_shear = w * (b - a) / L * ((b - a) / 2 + a)
 
         if self.moment_release_left == 1 and self.moment_release_right == 0:
-            beginning_shear = (beginning_shear - 3 / (2*L) * beginning_moment)
-            end_shear = (end_shear + 3 / (2*L) * beginning_moment)
+            beginning_shear = beginning_shear - 3 / (2 * L) * beginning_moment
+            end_shear = end_shear + 3 / (2 * L) * beginning_moment
             end_moment = end_moment - 1 / 2 * beginning_moment
-            self.forces[self.node_list[0]][1] += - beginning_shear
-            self.forces[self.node_list[1]][1] += - end_shear
+            self.forces[self.node_list[0]][1] += -beginning_shear
+            self.forces[self.node_list[1]][1] += -end_shear
             self.forces[self.node_list[1]][2] += end_moment
         elif self.moment_release_left == 0 and self.moment_release_right == 1:
-            beginning_shear = (beginning_shear - 3 / (2*L) * end_moment)
-            end_shear = (end_shear + 3 / (2*L) * end_moment)
+            beginning_shear = beginning_shear - 3 / (2 * L) * end_moment
+            end_shear = end_shear + 3 / (2 * L) * end_moment
             beginning_moment = beginning_moment - 1 / 2 * end_moment
-            self.forces[self.node_list[0]][1] += - beginning_shear
-            self.forces[self.node_list[1]][1] += - end_shear
+            self.forces[self.node_list[0]][1] += -beginning_shear
+            self.forces[self.node_list[1]][1] += -end_shear
             self.forces[self.node_list[0]][2] += beginning_moment
         elif self.moment_release_right == 1 and self.moment_release_right == 1:
-            beginning_shear = (beginning_shear - 1 / L * (beginning_moment + end_moment))
-            end_shear = (end_shear + 1 / L * (beginning_moment + end_moment))
-            self.forces[self.node_list[0]][1] += - beginning_shear
-            self.forces[self.node_list[1]][1] += - end_shear
+            beginning_shear = beginning_shear - 1 / L * (beginning_moment + end_moment)
+            end_shear = end_shear + 1 / L * (beginning_moment + end_moment)
+            self.forces[self.node_list[0]][1] += -beginning_shear
+            self.forces[self.node_list[1]][1] += -end_shear
         else:
-            self.forces[self.node_list[0]][1] += - beginning_shear
-            self.forces[self.node_list[1]][1] += - end_shear
+            self.forces[self.node_list[0]][1] += -beginning_shear
+            self.forces[self.node_list[1]][1] += -end_shear
             self.forces[self.node_list[0]][2] += beginning_moment
             self.forces[self.node_list[1]][2] += end_moment
 
@@ -479,10 +494,10 @@ class Member_2D:
         for index, shear_value in enumerate(shear_values):
             if shear_value < a:
                 shear_values[index] = beginning_shear
-            elif shear_value >= a and shear_value < b :
-                shear_values[index] = beginning_shear - w*(shear_value - a)
+            elif shear_value >= a and shear_value < b:
+                shear_values[index] = beginning_shear - w * (shear_value - a)
             else:
-                shear_values[index] = beginning_shear - w*(b - a)
+                shear_values[index] = beginning_shear - w * (b - a)
 
         self.shear += shear_values
 
@@ -490,92 +505,95 @@ class Member_2D:
         # if self.moment_release_left == 1:
         #     beginning_moment = 0
         moment_values = self.x_array.copy()
-        for index, moment_value in enumerate(moment_values): #TODO FIX MOMENT VALUES
+        for index, moment_value in enumerate(moment_values):  # TODO FIX MOMENT VALUES
             if moment_value < a:
                 moment_values[index] = beginning_moment - beginning_shear * moment_value
-            elif moment_value >= a and moment_value < b :
-                moment_values[index] = beginning_moment - beginning_shear * moment_value + w*(moment_value - a)**2 / 2
+            elif moment_value >= a and moment_value < b:
+                moment_values[index] = (
+                    beginning_moment
+                    - beginning_shear * moment_value
+                    + w * (moment_value - a) ** 2 / 2
+                )
             else:
-                moment_values[index] = beginning_moment - beginning_shear * moment_value + w * (b - a) * ((b-a)/2 + (moment_value - b))
+                moment_values[index] = (
+                    beginning_moment
+                    - beginning_shear * moment_value
+                    + w * (b - a) * ((b - a) / 2 + (moment_value - b))
+                )
 
         self.moment += moment_values
 
-
-    def Plot_Axial_Diagram(self, figure_size=[10,5], show_annoation = True): # OKAY
+    def Plot_Axial_Diagram(self, figure_size=[10, 5], show_annoation=True):  # OKAY
 
         x_array_relative = self.x_array / np.ceil(self.length)
 
         plt.figure(figsize=figure_size)
-        plt.plot(x_array_relative,self.axial, marker='o')
-        plt.fill_between(x_array_relative, 0, self.axial, hatch = '/', alpha = 0.1)
+        plt.plot(x_array_relative, self.axial, marker="o")
+        plt.fill_between(x_array_relative, 0, self.axial, hatch="/", alpha=0.1)
         plt.xlim([-0.1, 1.1])
         # plt.plot(self.x_array,self.axial, marker='o')
         # plt.fill_between(self.x_array, 0, self.axial, hatch = '/', alpha = 0.1)
         # plt.xlim([0, self.length])
-        plt.ylabel('Axial')
-        plt.xlabel('Length ratio, Length = {}'.format(self.length))
-        plt.title('Axial Diagram of Member {}'.format(self.member_number))
+        plt.ylabel("Axial")
+        plt.xlabel("Length ratio, Length = {}".format(self.length))
+        plt.title("Axial Diagram of Member {}".format(self.member_number))
 
         if show_annoation:
             for i, text in enumerate(self.axial):
-                plt.annotate(round(text,2), (x_array_relative[i], self.axial[i]))
+                plt.annotate(round(text, 2), (x_array_relative[i], self.axial[i]))
 
         plt.tight_layout()
         plt.show()
 
-
-
     # Plot Shear Diagram
-    def Plot_Shear_Diagram(self, figure_size=[10,5], show_annotation = True):
-        
+    def Plot_Shear_Diagram(self, figure_size=[10, 5], show_annotation=True):
+
         x_array_relative = self.x_array / np.ceil(self.length)
 
         plt.figure(figsize=figure_size)
-        plt.plot(x_array_relative,self.shear, marker='o')
-        plt.fill_between(x_array_relative, 0, self.shear, hatch = '/', alpha = 0.1)
+        plt.plot(x_array_relative, self.shear, marker="o")
+        plt.fill_between(x_array_relative, 0, self.shear, hatch="/", alpha=0.1)
         plt.xlim([-0.1, 1.1])
         # plt.plot(self.x_array,self.shear, marker='o')
         # plt.fill_between(self.x_array, 0, self.shear, hatch = '/', alpha = 0.1)
         # plt.xlim([0, self.length])
-        plt.ylabel('Shear')
-        plt.xlabel('Length ratio, Length = {}'.format(self.length))
-        plt.title('Shear Diagram of Member {}'.format(self.member_number))
+        plt.ylabel("Shear")
+        plt.xlabel("Length ratio, Length = {}".format(self.length))
+        plt.title("Shear Diagram of Member {}".format(self.member_number))
 
         if show_annotation:
             for i, text in enumerate(self.shear):
-                plt.annotate(round(text,2), (x_array_relative[i], self.shear[i]))
-        
+                plt.annotate(round(text, 2), (x_array_relative[i], self.shear[i]))
+
         plt.xticks(x_array_relative)
         plt.tight_layout()
         plt.show()
 
-
     # Plot Moment Diagram
-    def Plot_Moment_Diagram(self, figure_size = [10,5], show_annotation = True):
+    def Plot_Moment_Diagram(self, figure_size=[10, 5], show_annotation=True):
 
         x_array_relative = self.x_array / np.ceil(self.length)
 
         plt.figure(figsize=figure_size)
-        plt.plot(x_array_relative,-self.moment, marker='o')
-        plt.fill_between(x_array_relative, 0, -self.moment, hatch = '/', alpha = 0.1)
+        plt.plot(x_array_relative, -self.moment, marker="o")
+        plt.fill_between(x_array_relative, 0, -self.moment, hatch="/", alpha=0.1)
         plt.xlim([-0.1, 1.1])
         # plt.plot(self.x_array,-self.moment, marker='o')
         # plt.fill_between(self.x_array, 0, -self.moment, hatch = '/', alpha = 0.1)
         # plt.xlim([0, self.length])
-        plt.ylabel('Moment')
-        plt.xlabel('Length ratio, Length = {}'.format(self.length))
-        plt.title('Moment Diagram of Member {}'.format(self.member_number))
+        plt.ylabel("Moment")
+        plt.xlabel("Length ratio, Length = {}".format(self.length))
+        plt.title("Moment Diagram of Member {}".format(self.member_number))
 
         if show_annotation:
             for i, text in enumerate(self.moment):
-                plt.annotate(round(-text,2), (x_array_relative[i], -self.moment[i]))
+                plt.annotate(round(-text, 2), (x_array_relative[i], -self.moment[i]))
 
         plt.xticks(x_array_relative)
         plt.tight_layout()
         plt.show()
 
-
-    def Resolve_Forces_into_Components(self): # OKAY!
+    def Resolve_Forces_into_Components(self):  # OKAY!
         self.Compile_Member_Forces()
         # solve for angle
         nodes = self.nodes
@@ -592,12 +610,12 @@ class Member_2D:
         c = (x2 - x1) / L
         s = (y2 - y1) / L
 
-        FA_1 = self.forces[self.node_list[0]][0] 
-        FA_2 = self.forces[self.node_list[1]][0] 
-        FV_1 = self.forces[self.node_list[0]][1] 
-        FV_2 = self.forces[self.node_list[1]][1] 
-        M_1 = self.forces[self.node_list[0]][2] 
-        M_2 = self.forces[self.node_list[1]][2] 
+        FA_1 = self.forces[self.node_list[0]][0]
+        FA_2 = self.forces[self.node_list[1]][0]
+        FV_1 = self.forces[self.node_list[0]][1]
+        FV_2 = self.forces[self.node_list[1]][1]
+        M_1 = self.forces[self.node_list[0]][2]
+        M_2 = self.forces[self.node_list[1]][2]
 
         FV1_x = -FV_1 * s
         FV2_x = -FV_2 * s
@@ -611,30 +629,30 @@ class Member_2D:
         FV2_y = FV_2 * c
 
         self.resolved_forces = {}
-        
+
         for node in nodes:
-            self.resolved_forces.update({node: [0,0,0]})
-        
+            self.resolved_forces.update({node: [0, 0, 0]})
+
         self.resolved_forces[self.node_list[0]][0] = FV1_x + FA_1_x
         self.resolved_forces[self.node_list[0]][1] = FV1_y + FA_1_y
-        
+
         self.resolved_forces[self.node_list[1]][0] = FV2_x + FA_2_x
         self.resolved_forces[self.node_list[1]][1] = FV2_y + FA_2_y
 
-        if x2 >= x1 and y2 >= y1: # 0 to 90 degrees
-            self.resolved_forces[self.node_list[0]][2] = - M_1
-            self.resolved_forces[self.node_list[1]][2] = - M_2
-        elif x1 >= x2 and y2 >= y1: # 91 to 180 degrees
-            self.resolved_forces[self.node_list[0]][2] = - M_1
-            self.resolved_forces[self.node_list[1]][2] = - M_2
-        elif x1 >= x2 and y1 >= y2: # 181 to 270 degrees
-            self.resolved_forces[self.node_list[0]][2] = - M_1
-            self.resolved_forces[self.node_list[1]][2] = - M_2
-        else: # 271 to 359
-            self.resolved_forces[self.node_list[0]][2] = - M_1
-            self.resolved_forces[self.node_list[1]][2] = - M_2
+        if x2 >= x1 and y2 >= y1:  # 0 to 90 degrees
+            self.resolved_forces[self.node_list[0]][2] = -M_1
+            self.resolved_forces[self.node_list[1]][2] = -M_2
+        elif x1 >= x2 and y2 >= y1:  # 91 to 180 degrees
+            self.resolved_forces[self.node_list[0]][2] = -M_1
+            self.resolved_forces[self.node_list[1]][2] = -M_2
+        elif x1 >= x2 and y1 >= y2:  # 181 to 270 degrees
+            self.resolved_forces[self.node_list[0]][2] = -M_1
+            self.resolved_forces[self.node_list[1]][2] = -M_2
+        else:  # 271 to 359
+            self.resolved_forces[self.node_list[0]][2] = -M_1
+            self.resolved_forces[self.node_list[1]][2] = -M_2
 
-    def Reaction_Add_Shear_At_Left_Support(self, shear): # OKAY
+    def Reaction_Add_Shear_At_Left_Support(self, shear):  # OKAY
         shear_values = self.x_array.copy()
         for index, _ in enumerate(shear_values):
             shear_values[index] = shear
@@ -645,22 +663,19 @@ class Member_2D:
             moment_values[index] = -shear * moment_value
         self.moment += moment_values
 
-
-    def Reaction_Add_Moment_At_Left_Support(self, moment): # OKAY
+    def Reaction_Add_Moment_At_Left_Support(self, moment):  # OKAY
         moment_values = self.x_array.copy()
         for index, _ in enumerate(moment_values):
             moment_values[index] = moment
         self.moment += moment_values
 
-
-    def Reaction_Add_Axial_At_Left_Support(self, axial): # OKAY
+    def Reaction_Add_Axial_At_Left_Support(self, axial):  # OKAY
         axial_values = self.x_array.copy()
         for index, _ in enumerate(axial_values):
             axial_values[index] = axial
         self.axial += axial_values
 
-
-    def Plot_Diagrams(self, figure_size = [15,10], show_annotation = True): # OKAY
+    def Plot_Diagrams(self, figure_size=[15, 10], show_annotation=True):  # OKAY
         fig, axs = plt.subplots(3, 1)
         fig.set_figheight(figure_size[0])
         fig.set_figwidth(figure_size[1])
@@ -670,61 +685,61 @@ class Member_2D:
         x_array_relative = self.x_array / np.ceil(self.length)
 
         # Plot Axial Diagram
-        axs[0].plot(x_array_relative,self.axial, marker = 'o')
-        axs[0].fill_between(x_array_relative, 0, self.axial, hatch = '/', alpha = 0.1)
-        axs[0].set_xlim([-0.1,1.1])
-        axs[0].set_ylabel('Axial')
-        axs[0].set_xlabel('Length ratio, Length = {}'.format(self.length))
-        axs[0].set_title('Axial Diagram of Member {}'.format(self.member_number))
-        
+        axs[0].plot(x_array_relative, self.axial, marker="o")
+        axs[0].fill_between(x_array_relative, 0, self.axial, hatch="/", alpha=0.1)
+        axs[0].set_xlim([-0.1, 1.1])
+        axs[0].set_ylabel("Axial")
+        axs[0].set_xlabel("Length ratio, Length = {}".format(self.length))
+        axs[0].set_title("Axial Diagram of Member {}".format(self.member_number))
+
         if show_annotation:
             for i, text in enumerate(self.axial):
-                axs[0].annotate(round(text,2), (x_array_relative[i], self.axial[i]))
+                axs[0].annotate(round(text, 2), (x_array_relative[i], self.axial[i]))
 
         axs[0].margins(0.2)
 
         # Plot Shear Diagram
-        axs[1].plot(x_array_relative,self.shear, marker = 'o')
-        axs[1].fill_between(x_array_relative, 0, self.shear, hatch = '/', alpha = 0.1)
-        axs[1].set_xlim([-0.1,1.1])
-        axs[1].set_ylabel('Shear')
-        axs[1].set_xlabel('Length ratio, Length = {}'.format(self.length))
-        axs[1].set_title('Shear Diagram of Member {}'.format(self.member_number))
+        axs[1].plot(x_array_relative, self.shear, marker="o")
+        axs[1].fill_between(x_array_relative, 0, self.shear, hatch="/", alpha=0.1)
+        axs[1].set_xlim([-0.1, 1.1])
+        axs[1].set_ylabel("Shear")
+        axs[1].set_xlabel("Length ratio, Length = {}".format(self.length))
+        axs[1].set_title("Shear Diagram of Member {}".format(self.member_number))
 
         if show_annotation:
             for i, text in enumerate(self.shear):
-                axs[1].annotate(round(text,2), (x_array_relative[i], self.shear[i]))
-        
+                axs[1].annotate(round(text, 2), (x_array_relative[i], self.shear[i]))
+
         axs[1].margins(0.2)
 
         # Plot Moment Diagram
-        axs[2].plot(x_array_relative,-self.moment, marker = 'o')
-        axs[2].fill_between(x_array_relative, 0, -self.moment, hatch = '/', alpha = 0.1)
-        axs[2].set_xlim([-0.1,1.1])
-        axs[2].set_ylabel('Moment')
-        axs[2].set_xlabel('Length ratio, Length = {}'.format(self.length))
-        axs[2].set_title('Moment Diagram of Member {}'.format(self.member_number))
+        axs[2].plot(x_array_relative, -self.moment, marker="o")
+        axs[2].fill_between(x_array_relative, 0, -self.moment, hatch="/", alpha=0.1)
+        axs[2].set_xlim([-0.1, 1.1])
+        axs[2].set_ylabel("Moment")
+        axs[2].set_xlabel("Length ratio, Length = {}".format(self.length))
+        axs[2].set_title("Moment Diagram of Member {}".format(self.member_number))
 
         if show_annotation:
             for i, text in enumerate(self.moment):
-                axs[2].annotate(round(-text,2), (x_array_relative[i], -self.moment[i]))
-        
+                axs[2].annotate(round(-text, 2), (x_array_relative[i], -self.moment[i]))
+
         axs[2].margins(0.2)
-        
+
         plt.tight_layout()
         plt.show()
 
-    def Summary(self): # OKAY
+    def Summary(self):  # OKAY
         self.moment_max = -np.max(self.moment)
         self.moment_min = -np.min(self.moment)
         self.moment_at_left = -self.moment[0]
         self.moment_at_right = -self.moment[-1]
-        
+
         self.shear_max = np.max(self.shear)
         self.shear_min = np.min(self.shear)
         self.shear_at_left = self.shear[0]
         self.shear_at_right = self.shear[-1]
-        
+
         print("At Left End:")
         print("Axial: {}".format(self.axial[0]))
         print("Shear: {}".format(self.shear_at_left))
@@ -740,12 +755,11 @@ class Member_2D:
         print("Maximum Shear: {}".format(self.shear_max))
         print("Minimum Moment: {}".format(self.moment_min))
         print("Maximum Moment: {}".format(self.moment_max))
-        
 
     def Assemble_Plot_Loadings(self):
         self.nodes
         self.member_number
-        
+
         # Loadings
         self.points_of_interest
         self.uniform_full_load
@@ -754,29 +768,32 @@ class Member_2D:
         self.self_weight
         self.uniform_full_load_fx
         self.uniform_full_load_fy
-        
+
         # Assemble nodes and loadings into a dictionary
-        plot_loadings = {self.member_number: {'nodes': self.nodes, 
-                                              'uniform_full_load': self.uniform_full_load, 
-                                              'point_load'  : self.point_load, 
-                                              'uniform_axial_load' : self.uniform_axial_load, 
-                                              'self_weight' : self.self_weight, 
-                                              'uniform_full_load_fx': self.uniform_full_load_fx, 
-                                              'uniform_full_load_fy': self.uniform_full_load_fy}}
-        
+        plot_loadings = {
+            self.member_number: {
+                "nodes": self.nodes,
+                "uniform_full_load": self.uniform_full_load,
+                "point_load": self.point_load,
+                "uniform_axial_load": self.uniform_axial_load,
+                "self_weight": self.self_weight,
+                "uniform_full_load_fx": self.uniform_full_load_fx,
+                "uniform_full_load_fy": self.uniform_full_load_fy,
+            }
+        }
+
         # print(plot_loadings)
         return plot_loadings
-        
 
     # def Assemble_Member_Stiffness_Matrix(self):
     #     # moment_releases_left = self.member_moment_releases[element][0]
     #     # moment_releases_right = self.member_moment_releases[element][1]
-        
+
     #     # from_point = elements[element][0]
     #     # to_point = elements[element][1]
     #     # from_node = nodes[from_point]
     #     # to_node = nodes[to_point]
-        
+
     #     # compute length of member
     #     coordinates = []
     #     for node in self.nodes:
@@ -785,7 +802,7 @@ class Member_2D:
     #     y1 = coordinates[0][1]
     #     x2 = coordinates[1][0]
     #     y2 = coordinates[1][1]
-        
+
     #     L = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
     #     c = (x2 - x1)/L
     #     s = (y2 - y1)/L
@@ -801,7 +818,7 @@ class Member_2D:
     #     #                                 [-A*L**2/I,    0,      0,  A*L**2/I,     0,      0],
     #     #                                 [0,            0,      0,         0,     0,      0],
     #     #                                 [0,            0,      0,         0,     0,      0]])
-        
+
     #     # elif moment_releases_left == 1 and moment_releases_right == 0:
     #     #     k = E * I / L**3 * np.array([[A*L**2/I,    0,      0, -A*L**2/I,     0,     0],
     #     #                                 [0,          3,        0,         0,   -3,    3*L],
@@ -809,7 +826,7 @@ class Member_2D:
     #     #                                 [-A*L**2/I,   0,       0,  A*L**2/I,    0,      0],
     #     #                                 [0,         -3,        0,         0,    3,    -3*L],
     #     #                                 [0,         3*L,       0,         0,  -3*L, 3*L**2]])
-        
+
     #     # elif moment_releases_left == 0 and moment_releases_right == 1:
     #     #     k = E * I / L**3 * np.array([[A*L**2/I,    0,      0, -A*L**2/I,    0,    0],
     #     #                                 [0,            3,    3*L,         0,   -3,    0],
@@ -825,7 +842,7 @@ class Member_2D:
     #                                 [-A*L**2/I,   0,      0,  A*L**2/I,     0,      0],
     #                                 [0,         -12,   -6*L,         0,    12,   -6*L],
     #                                 [0,         6*L, 2*L**2,         0,  -6*L, 4*L**2]])
-        
+
     #     T = np.array([[c, s, 0 , 0, 0, 0],
     #                 [-s, c, 0, 0, 0, 0],
     #                 [0, 0, 1, 0, 0, 0],
@@ -835,40 +852,39 @@ class Member_2D:
 
     #     K = np.transpose(T).dot(k).dot(T)
 
-    #     return K        
-        
+    #     return K
+
 
 class Frame_2D:
-    
     def __init__(self):
-        '''
+        """
         Initializes Frame class object. User should be aware of its units for consistency of solution.
-        
+
         Parameters
         ----------
-        
-        nodes: dictionary 
+
+        nodes: dictionary
                nodal name/mark followed by the [x,y] coordinate in an array form.
-        
+
         elements: dictionary
                   member or element name followed by the connecting nodes in a form of an array.
-                  
+
         supports: dictionary
                   applies supports at the node name/mark followed by the an array support condition as follows:
                   if array == [1,1]: Pin support
                   if array == [0,1]: Roller support free to move abot the x-axis
                   if array == [1,0]: Roller support free to move abot the y-axis
-                  
+
         forces: dictionary
                 applies forces at the node name/mark, followed by an array of [x,y] coordinate. Positive values for x-axis indicate right direction. Positive values for y-axis indicate up direction
-        
+
         elasticities dictionary
                     member's modulus of elasticities. Member's name/mark followed by its modulus of elasticities
-                    
+
         areas: dictionary
                     member's cross-sectional area. Member's name/mark followed by its cross-sectional area
-                  
-        '''
+
+        """
         self.nodes = {}
         self.elements = {}
         self.supports = {}
@@ -878,7 +894,6 @@ class Frame_2D:
         self.inertias = {}
         self.plot_loadings = {}
         self.members = {}
-
 
     def Compile_Frame_Member_Properties(self, members_dict):
         """Imports all the relevant member data stored inside a dictionary.
@@ -890,7 +905,7 @@ class Frame_2D:
             beams: dict = {}
             beams.update({'2G-1/1': Member_2D(member_number: 1, area=1_000, elasticity=200_000, inertia=100_000, nodes:{1:[0,0], 2:[5,0]})})
             beams.update({'2G-1/2': Member_2D(member_number: 2, area=1_000, elasticity=200_000, inertia=100_000, nodes:{2:[5,0], 3:[10,0]})}
-            
+
             member_ = [] # <-- THis is the list to be inserted as parameter
             for _, beam in beams.items():
                 member_list.append(beam)
@@ -898,18 +913,20 @@ class Frame_2D:
         self.members = members_dict
         members_list = []
         for _, beam in members_dict.items():
-            members_list.append(beam)        
-              
+            members_list.append(beam)
+
         # Compile all nodes
         nodes = {}
         for member in members_list:
             nodes.update(member.nodes)
-        
+
         # Compile all elements
         elements = {}
         for member in members_list:
-            elements.update({member.member_number: [member.node_list[0], member.node_list[1]]})
-        
+            elements.update(
+                {member.member_number: [member.node_list[0], member.node_list[1]]}
+            )
+
         # Compile all areas
         areas = {}
         for member in members_list:
@@ -919,7 +936,7 @@ class Frame_2D:
         inertias = {}
         for member in members_list:
             inertias.update({member.member_number: member.inertia})
-        
+
         # Compile all elasticities
         elasticities = {}
         for member in members_list:
@@ -930,28 +947,50 @@ class Frame_2D:
         for member in members_list:
             local_member_forces.append([v for v in member.forces.values()])
 
-        __local_member_forces_dict = {key: [0,0,0,0,0,0] for key in range(1,len(local_member_forces)+1)}
+        __local_member_forces_dict = {
+            key: [0, 0, 0, 0, 0, 0] for key in range(1, len(local_member_forces) + 1)
+        }
         for i, force in enumerate(local_member_forces):
-            __local_member_forces_dict.update({i+1: np.array([force[0][0], -force[0][1], force[0][2], force[1][0], -force[1][1], force[1][2]])})
-        
+            __local_member_forces_dict.update(
+                {
+                    i + 1: np.array(
+                        [
+                            force[0][0],
+                            -force[0][1],
+                            force[0][2],
+                            force[1][0],
+                            -force[1][1],
+                            force[1][2],
+                        ]
+                    )
+                }
+            )
+
         # Compile all load forces
-        forces = {key: [0,0,0] for key in nodes}
+        forces = {key: [0, 0, 0] for key in nodes}
         for member in members_list:
             member.Resolve_Forces_into_Components()
             member_forces_temp = member.resolved_forces
 
-            for key in forces: 
-                if key in member_forces_temp: 
-                    forces[key][0] += member_forces_temp[key][0] 
-                    forces[key][1] += member_forces_temp[key][1] 
-                    forces[key][2] += member_forces_temp[key][2] 
+            for key in forces:
+                if key in member_forces_temp:
+                    forces[key][0] += member_forces_temp[key][0]
+                    forces[key][1] += member_forces_temp[key][1]
+                    forces[key][2] += member_forces_temp[key][2]
 
         forces = {k: v for k, v in sorted(forces.items(), key=lambda item: item[0])}
 
         # Compile all member releases
         member_moment_releases = {}
         for member in members_list:
-            member_moment_releases.update({member.member_number: [member.moment_release_left, member.moment_release_right]})
+            member_moment_releases.update(
+                {
+                    member.member_number: [
+                        member.moment_release_left,
+                        member.moment_release_right,
+                    ]
+                }
+            )
 
         # Compile all member release coordinates for plotting
         moment_releases_coordinates = []
@@ -976,16 +1015,16 @@ class Frame_2D:
         self.member_moment_releases = member_moment_releases
         self.moment_releases_coordinates = moment_releases_coordinates
         self.plot_loadings = plot_loadings
-        self.plot_loadings.update({'nodal_load': {}}) 
-    
+        self.plot_loadings.update({"nodal_load": {}})
+
     def Add_Load_Node(self, nodal_load):
-        self.plot_loadings.update({'nodal_load': nodal_load})
+        self.plot_loadings.update({"nodal_load": nodal_load})
         forces = self.forces
-        for key in forces: 
+        for key in forces:
             if key in nodal_load:
-                forces[key][0] += nodal_load[key][0] 
-                forces[key][1] += nodal_load[key][1] 
-                forces[key][2] += nodal_load[key][2] 
+                forces[key][0] += nodal_load[key][0]
+                forces[key][1] += nodal_load[key][1]
+                forces[key][2] += nodal_load[key][2]
         self.forces.update(forces)
 
     def __Member_Lengths(self, element, nodes, elements):
@@ -998,15 +1037,16 @@ class Frame_2D:
         y1 = from_node[1]
         x2 = to_node[0]
         y2 = to_node[1]
-        
-        L = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+        L = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
         return L
 
-
-    def __Assemble_Stiffness_Matrix(self, element, areas, nodes, elements, elasticities, inertias):
+    def __Assemble_Stiffness_Matrix(
+        self, element, areas, nodes, elements, elasticities, inertias
+    ):
         moment_releases_left = self.member_moment_releases[element][0]
         moment_releases_right = self.member_moment_releases[element][1]
-        
+
         from_point = elements[element][0]
         to_point = elements[element][1]
         from_node = nodes[from_point]
@@ -1016,64 +1056,102 @@ class Frame_2D:
         y1 = from_node[1]
         x2 = to_node[0]
         y2 = to_node[1]
-        
-        L = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-        c = (x2 - x1)/L
-        s = (y2 - y1)/L
+
+        L = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        c = (x2 - x1) / L
+        s = (y2 - y1) / L
 
         A = areas[element]
         I = inertias[element]
         E = elasticities[element]
 
         if moment_releases_left == 1 and moment_releases_right == 1:
-            k = E * I / L**3 * np.array([[A*L**2/I,    0,      0, -A*L**2/I,     0,      0],
-                                        [0,            0,      0,         0,     0,      0],
-                                        [0,            0,      0,         0,     0,      0],
-                                        [-A*L**2/I,    0,      0,  A*L**2/I,     0,      0],
-                                        [0,            0,      0,         0,     0,      0],
-                                        [0,            0,      0,         0,     0,      0]])
-        
+            k = (
+                E
+                * I
+                / L**3
+                * np.array(
+                    [
+                        [A * L**2 / I, 0, 0, -A * L**2 / I, 0, 0],
+                        [0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0],
+                        [-A * L**2 / I, 0, 0, A * L**2 / I, 0, 0],
+                        [0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0],
+                    ]
+                )
+            )
+
         elif moment_releases_left == 1 and moment_releases_right == 0:
-            k = E * I / L**3 * np.array([[A*L**2/I,    0,      0, -A*L**2/I,     0,     0],
-                                        [0,          3,        0,         0,   -3,    3*L],
-                                        [0,          0,        0,         0,    0,      0],
-                                        [-A*L**2/I,   0,       0,  A*L**2/I,    0,      0],
-                                        [0,         -3,        0,         0,    3,    -3*L],
-                                        [0,         3*L,       0,         0,  -3*L, 3*L**2]])
-        
+            k = (
+                E
+                * I
+                / L**3
+                * np.array(
+                    [
+                        [A * L**2 / I, 0, 0, -A * L**2 / I, 0, 0],
+                        [0, 3, 0, 0, -3, 3 * L],
+                        [0, 0, 0, 0, 0, 0],
+                        [-A * L**2 / I, 0, 0, A * L**2 / I, 0, 0],
+                        [0, -3, 0, 0, 3, -3 * L],
+                        [0, 3 * L, 0, 0, -3 * L, 3 * L**2],
+                    ]
+                )
+            )
+
         elif moment_releases_left == 0 and moment_releases_right == 1:
-            k = E * I / L**3 * np.array([[A*L**2/I,    0,      0, -A*L**2/I,    0,    0],
-                                        [0,            3,    3*L,         0,   -3,    0],
-                                        [0,          3*L, 3*L**2,         0, -3*L,    0],
-                                        [-A*L**2/I,   0,       0,  A*L**2/I,    0,    0],
-                                        [0,          -3,    -3*L,         0,    3,    0],
-                                        [0,           0,       0,         0,    0,    0]])
+            k = (
+                E
+                * I
+                / L**3
+                * np.array(
+                    [
+                        [A * L**2 / I, 0, 0, -A * L**2 / I, 0, 0],
+                        [0, 3, 3 * L, 0, -3, 0],
+                        [0, 3 * L, 3 * L**2, 0, -3 * L, 0],
+                        [-A * L**2 / I, 0, 0, A * L**2 / I, 0, 0],
+                        [0, -3, -3 * L, 0, 3, 0],
+                        [0, 0, 0, 0, 0, 0],
+                    ]
+                )
+            )
 
         else:
-            k = E * I / L**3 * np.array([[A*L**2/I,    0,      0, -A*L**2/I,     0,      0],
-                                        [0,          12,    6*L,         0,   -12,    6*L],
-                                        [0,         6*L, 4*L**2,         0,  -6*L, 2*L**2],
-                                        [-A*L**2/I,   0,      0,  A*L**2/I,     0,      0],
-                                        [0,         -12,   -6*L,         0,    12,   -6*L],
-                                        [0,         6*L, 2*L**2,         0,  -6*L, 4*L**2]])
-        
-        T = np.array([[c, s, 0 , 0, 0, 0],
-                    [-s, c, 0, 0, 0, 0],
-                    [0, 0, 1, 0, 0, 0],
-                    [0, 0, 0, c, s, 0],
-                    [0, 0, 0, -s, c, 0],
-                    [0, 0, 0, 0, 0, 1]])
+            k = (
+                E
+                * I
+                / L**3
+                * np.array(
+                    [
+                        [A * L**2 / I, 0, 0, -A * L**2 / I, 0, 0],
+                        [0, 12, 6 * L, 0, -12, 6 * L],
+                        [0, 6 * L, 4 * L**2, 0, -6 * L, 2 * L**2],
+                        [-A * L**2 / I, 0, 0, A * L**2 / I, 0, 0],
+                        [0, -12, -6 * L, 0, 12, -6 * L],
+                        [0, 6 * L, 2 * L**2, 0, -6 * L, 4 * L**2],
+                    ]
+                )
+            )
+
+        T = np.array(
+            [
+                [c, s, 0, 0, 0, 0],
+                [-s, c, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+                [0, 0, 0, c, s, 0],
+                [0, 0, 0, -s, c, 0],
+                [0, 0, 0, 0, 0, 1],
+            ]
+        )
 
         K = np.transpose(T).dot(k).dot(T)
 
         return K
 
-
     def __Assemble_Global_Stiffness(self, K, k, i, j):
-        dofs = [3*i-3, 3*i-2, 3*i-1, 3*j-3, 3*j-2, 3*j-1]
-        K[np.ix_(dofs,dofs)] += k
+        dofs = [3 * i - 3, 3 * i - 2, 3 * i - 1, 3 * j - 3, 3 * j - 2, 3 * j - 1]
+        K[np.ix_(dofs, dofs)] += k
         return K
-
 
     def __Support_Vector(self, restrained_dofs, nodes):
         dofs = np.zeros([3 * len(nodes)])
@@ -1091,17 +1169,15 @@ class Frame_2D:
 
         return support_vector
 
-
     def __Apply_Boundary_Conditions(self, support_vector, K_global):
         dofs = []
 
         for j in support_vector:
             dofs.append(j - 1)
 
-        k = np.delete(K_global, obj = dofs, axis = 0)
-        k_new = np.delete(k, obj = dofs, axis = 1)
+        k = np.delete(K_global, obj=dofs, axis=0)
+        k_new = np.delete(k, obj=dofs, axis=1)
         return k_new
-
 
     def __Assemble_Force_Vector(self, forces, support_vector, nodes):
         # Create force vector
@@ -1118,26 +1194,25 @@ class Frame_2D:
 
         # loops and appends restrained dofs and appends it to the list dof
         for j in support_vector:
-            dofs.append(j-1)
+            dofs.append(j - 1)
 
         # removes force vector unecessary rows
-        f_new = np.delete(f, obj = dofs, axis = 0)
+        f_new = np.delete(f, obj=dofs, axis=0)
         return f_new
-
 
     def __Frame_Global_Displacement(self, displacements, Support_Vector, nodes):
         # Create New Support Vector in python indexing
         support_vector_new = [x - 1 for x in Support_Vector]
 
         # Create Displacement Vector
-        displacement_vector = np.zeros(3*len(nodes))
+        displacement_vector = np.zeros(3 * len(nodes))
 
         # Creating global displacement vector that looks for all elements in the support vector and replacing the with value of 0 of that particular index
         j = 0
 
         # Looping displacement vectors indexes and looks for any of the value within the array "Support_Vector". Replaces with 0 if the value of the index is equal to any of the support vector.
         for i, _ in enumerate(displacement_vector):
-            if np.any(np.in1d(support_vector_new, i)):
+            if np.any(np.isin(support_vector_new, i)):
                 displacement_vector[i] = 0
             else:
                 displacement_vector[i] = displacements[j]
@@ -1145,17 +1220,21 @@ class Frame_2D:
 
         return displacement_vector
 
-
     def __Solve_Reactions(self, K_global, displacement_vector):
-        return (K_global.dot(displacement_vector))
-
+        return K_global.dot(displacement_vector)
 
     def __Element_Displacement(self, element_number, global_displacement, elements):
         fromNode = elements[element_number][0]
         toNode = elements[element_number][1]
 
-        u = [3 * fromNode - 2, 3 * fromNode - 1, 3 * fromNode, 
-            3 * toNode - 2, 3 * toNode - 1, 3 * toNode]
+        u = [
+            3 * fromNode - 2,
+            3 * fromNode - 1,
+            3 * fromNode,
+            3 * toNode - 2,
+            3 * toNode - 1,
+            3 * toNode,
+        ]
 
         # u.sort()
 
@@ -1166,8 +1245,16 @@ class Frame_2D:
 
         return elem_displacements
 
-
-    def __Solve_Member_Force(self, element, element_displacements, areas, nodes, elements, elasticities, inertias):
+    def __Solve_Member_Force(
+        self,
+        element,
+        element_displacements,
+        areas,
+        nodes,
+        elements,
+        elasticities,
+        inertias,
+    ):
         moment_releases_left = self.member_moment_releases[element][0]
         moment_releases_right = self.member_moment_releases[element][1]
 
@@ -1180,97 +1267,144 @@ class Frame_2D:
         y1 = from_node[1]
         x2 = to_node[0]
         y2 = to_node[1]
-        
-        L = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-        
-        c = (x2 - x1)/L
-        s = (y2 - y1)/L
+
+        L = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+        c = (x2 - x1) / L
+        s = (y2 - y1) / L
 
         A = areas[element]
         I = inertias[element]
         E = elasticities[element]
-        u = element_displacements[element-1]
-        
+        u = element_displacements[element - 1]
 
         if moment_releases_left == 1 and moment_releases_right == 1:
-            k = E * I / L**3 * np.array([[A*L**2/I,    0,      0, -A*L**2/I,     0,      0],
-                                        [0,            0,      0,         0,     0,      0],
-                                        [0,            0,      0,         0,     0,      0],
-                                        [-A*L**2/I,    0,      0,  A*L**2/I,     0,      0],
-                                        [0,            0,      0,         0,     0,      0],
-                                        [0,            0,      0,         0,     0,      0]])
-        
+            k = (
+                E
+                * I
+                / L**3
+                * np.array(
+                    [
+                        [A * L**2 / I, 0, 0, -A * L**2 / I, 0, 0],
+                        [0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0],
+                        [-A * L**2 / I, 0, 0, A * L**2 / I, 0, 0],
+                        [0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0],
+                    ]
+                )
+            )
+
         elif moment_releases_left == 1 and moment_releases_right == 0:
-            k = E * I / L**3 * np.array([[A*L**2/I,    0,      0, -A*L**2/I,     0,     0],
-                                        [0,          3,        0,         0,   -3,    3*L],
-                                        [0,          0,        0,         0,    0,      0],
-                                        [-A*L**2/I,   0,       0,  A*L**2/I,    0,      0],
-                                        [0,         -3,        0,         0,    3,    -3*L],
-                                        [0,         3*L,       0,         0,  -3*L, 3*L**2]])
-        
+            k = (
+                E
+                * I
+                / L**3
+                * np.array(
+                    [
+                        [A * L**2 / I, 0, 0, -A * L**2 / I, 0, 0],
+                        [0, 3, 0, 0, -3, 3 * L],
+                        [0, 0, 0, 0, 0, 0],
+                        [-A * L**2 / I, 0, 0, A * L**2 / I, 0, 0],
+                        [0, -3, 0, 0, 3, -3 * L],
+                        [0, 3 * L, 0, 0, -3 * L, 3 * L**2],
+                    ]
+                )
+            )
+
         elif moment_releases_left == 0 and moment_releases_right == 1:
-            k = E * I / L**3 * np.array([[A*L**2/I,    0,      0, -A*L**2/I,    0,    0],
-                                        [0,            3,    3*L,         0,   -3,    0],
-                                        [0,          3*L, 3*L**2,         0, -3*L,    0],
-                                        [-A*L**2/I,   0,       0,  A*L**2/I,    0,    0],
-                                        [0,          -3,    -3*L,         0,    3,    0],
-                                        [0,           0,       0,         0,    0,    0]])
+            k = (
+                E
+                * I
+                / L**3
+                * np.array(
+                    [
+                        [A * L**2 / I, 0, 0, -A * L**2 / I, 0, 0],
+                        [0, 3, 3 * L, 0, -3, 0],
+                        [0, 3 * L, 3 * L**2, 0, -3 * L, 0],
+                        [-A * L**2 / I, 0, 0, A * L**2 / I, 0, 0],
+                        [0, -3, -3 * L, 0, 3, 0],
+                        [0, 0, 0, 0, 0, 0],
+                    ]
+                )
+            )
 
         else:
-            k = E * I / L**3 * np.array([[A*L**2/I,    0,      0, -A*L**2/I,     0,      0],
-                                        [0,          12,    6*L,         0,   -12,    6*L],
-                                        [0,         6*L, 4*L**2,         0,  -6*L, 2*L**2],
-                                        [-A*L**2/I,   0,      0,  A*L**2/I,     0,      0],
-                                        [0,         -12,   -6*L,         0,    12,   -6*L],
-                                        [0,         6*L, 2*L**2,         0,  -6*L, 4*L**2]])
-        
-        T = np.array([[c, s, 0 , 0, 0, 0],
-                    [-s, c, 0, 0, 0, 0],
-                    [0, 0, 1, 0, 0, 0],
-                    [0, 0, 0, c, s, 0],
-                    [0, 0, 0, -s, c, 0],
-                    [0, 0, 0, 0, 0, 1]])
+            k = (
+                E
+                * I
+                / L**3
+                * np.array(
+                    [
+                        [A * L**2 / I, 0, 0, -A * L**2 / I, 0, 0],
+                        [0, 12, 6 * L, 0, -12, 6 * L],
+                        [0, 6 * L, 4 * L**2, 0, -6 * L, 2 * L**2],
+                        [-A * L**2 / I, 0, 0, A * L**2 / I, 0, 0],
+                        [0, -12, -6 * L, 0, 12, -6 * L],
+                        [0, 6 * L, 2 * L**2, 0, -6 * L, 4 * L**2],
+                    ]
+                )
+            )
 
-
+        T = np.array(
+            [
+                [c, s, 0, 0, 0, 0],
+                [-s, c, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+                [0, 0, 0, c, s, 0],
+                [0, 0, 0, -s, c, 0],
+                [0, 0, 0, 0, 0, 1],
+            ]
+        )
 
         member_force = k.dot(T).dot(u)
         return member_force
 
     def __Displacements(self, displacements):
 
-        displacements = {key + 1: displacements[key] for (key, _) in enumerate(displacements + 1)}
+        displacements = {
+            key + 1: displacements[key] for (key, _) in enumerate(displacements + 1)
+        }
 
         displacements_dict = {}
-        
-        for displacement in range(1,int(len(displacements)/3 + 1)):
-            displacements_dict.update({displacement: [float(displacements[3 * displacement - 2]), float(displacements[3 * displacement - 1]), float(displacements[3 * displacement]) ]})
+
+        for displacement in range(1, int(len(displacements) / 3 + 1)):
+            displacements_dict.update(
+                {
+                    displacement: [
+                        float(displacements[3 * displacement - 2]),
+                        float(displacements[3 * displacement - 1]),
+                        float(displacements[3 * displacement]),
+                    ]
+                }
+            )
 
         return displacements_dict
 
     def Solve(self):
-        '''
+        """
         Solves the 2D Frame.
-        
+
         Output Parameters
         -----------------
-        
+
         displacements_: dictionary
-                        global displacement of each node. name of each node accompanied by its displacement values along x and y respectively 
-        
+                        global displacement of each node. name of each node accompanied by its displacement values along x and y respectively
+
         reactions_: dictionary
-                    global reactions of the Frame. name of each node accompanied by its force values along x and y respectively 
-        
+                    global reactions of the Frame. name of each node accompanied by its force values along x and y respectively
+
         member_forces_: dictionary
                         member forces of the Frame. name of each member accompanied by its force values. positive (+) values are in tension and negative (-) values are in compression
-        
+
         member_stresses_: dictionary
                           member stresses of the Frame. name of each member accompanied by its stress values. positive (+) values are in tension and negative (-) values are in compression
-                          
+
         K_global: numpy array
                   returns the Global Stiffness Matrix of the Frame
-        
-        '''       
-        
+
+        """
+
         nodes = self.nodes
         elements = self.elements
         supports = self.supports
@@ -1278,7 +1412,7 @@ class Frame_2D:
         elasticities = self.elasticities
         areas = self.areas
         inertias = self.inertias
-        
+
         # Step 1: Get all Member Lengths
         member_lengths = []
 
@@ -1290,15 +1424,21 @@ class Frame_2D:
         k_elems = []
 
         for element in elements:
-            k_elems.append(self.__Assemble_Stiffness_Matrix(element, areas, nodes, elements, elasticities, inertias))
+            k_elems.append(
+                self.__Assemble_Stiffness_Matrix(
+                    element, areas, nodes, elements, elasticities, inertias
+                )
+            )
 
         # Step 3: Assemble Global Stiffness Matrix
-        K_global = np.zeros([3*len(nodes), 3*len(nodes)])
+        K_global = np.zeros([3 * len(nodes), 3 * len(nodes)])
 
         for i, _ in enumerate(k_elems):
-            K_global = self.__Assemble_Global_Stiffness(K_global, k_elems[i], elements[i+1][0], elements[i+1][1])
+            K_global = self.__Assemble_Global_Stiffness(
+                K_global, k_elems[i], elements[i + 1][0], elements[i + 1][1]
+            )
 
-        # Step 4: Apply Boundary conditions to reduce the Global Stiffness Matrix 
+        # Step 4: Apply Boundary conditions to reduce the Global Stiffness Matrix
         Support_Vector = self.__Support_Vector(supports, nodes)
         K_new = self.__Apply_Boundary_Conditions(Support_Vector, K_global)
 
@@ -1308,38 +1448,54 @@ class Frame_2D:
         # Step 6: Solve for Displacement
         # Remove all columns and rows with all 0 for stiffness matrix and forces
         zero_index = np.where(~K_new.any(axis=0))[0]
-        K_new = np.delete(K_new, obj = zero_index, axis = 0)
-        K_new = np.delete(K_new, obj = zero_index, axis = 1)
-        f_new = np.delete(f_new, obj = zero_index, axis = 0)
+        K_new = np.delete(K_new, obj=zero_index, axis=0)
+        K_new = np.delete(K_new, obj=zero_index, axis=1)
+        f_new = np.delete(f_new, obj=zero_index, axis=0)
 
         displacements = np.linalg.inv(K_new).dot(f_new.transpose())
         displacements = np.insert(displacements, zero_index, 0)
 
         # Step 7: Create Global Displacement Vector
-        global_displacements = self.__Frame_Global_Displacement(displacements, Support_Vector, nodes)
+        global_displacements = self.__Frame_Global_Displacement(
+            displacements, Support_Vector, nodes
+        )
 
-        # Step 8: Solve for Reactions 
+        # Step 8: Solve for Reactions
         forces_for_reactions = []
         for force in self.forces:
             for i in range(3):
                 forces_for_reactions.append(self.forces[force][i])
 
         forces_for_reactions = np.array(forces_for_reactions)
-        reactions = self.__Solve_Reactions(K_global, global_displacements) - forces_for_reactions
+        reactions = (
+            self.__Solve_Reactions(K_global, global_displacements)
+            - forces_for_reactions
+        )
 
         # Step 9: Solve Member Displacements
         element_displacements = []
 
         for element in elements:
-            element_displacements.append(self.__Element_Displacement(element, global_displacements, elements))
+            element_displacements.append(
+                self.__Element_Displacement(element, global_displacements, elements)
+            )
 
         # Step 10A: Solve Member Forces
         solved_member_forces = []
 
         for element in elements:
-            solved_member_forces.append(self.__Solve_Member_Force(element, element_displacements, areas, nodes, elements, elasticities, inertias))
-        solved_member_forces = {key: solved_member_forces[key-1] for key in elements}
-
+            solved_member_forces.append(
+                self.__Solve_Member_Force(
+                    element,
+                    element_displacements,
+                    areas,
+                    nodes,
+                    elements,
+                    elasticities,
+                    inertias,
+                )
+            )
+        solved_member_forces = {key: solved_member_forces[key - 1] for key in elements}
 
         # Storing of Variables lists
         self.displacements_ = self.__Displacements(global_displacements)
@@ -1354,36 +1510,54 @@ class Frame_2D:
         # Member Lengths
         lengths = {}
         for key, length in enumerate(member_lengths):
-            lengths.update({key+1: length})
+            lengths.update({key + 1: length})
         self.member_lengths_ = lengths
 
         # Solved Member Forces
         self.solved_member_forces = solved_member_forces
-        
+
         # Updated Local Member Forces
         new_member_forces_dict = {}
         for key in solved_member_forces:
-            new_member_forces = solved_member_forces[key] + self.local_member_forces[key]
+            new_member_forces = (
+                solved_member_forces[key] + self.local_member_forces[key]
+            )
             new_member_forces_dict.update({key: new_member_forces})
         self.local_member_forces_solved_ = new_member_forces_dict
 
         # Step 11: Update Local Member Forces to its Member Class
         self.__Update_Member_Local_Forces()
-    
+
     def __Update_Member_Local_Forces(self):
         for element, member in enumerate(self.members_list):
-            member.Reaction_Add_Axial_At_Left_Support(self.solved_member_forces[element + 1][0])
-            member.Reaction_Add_Shear_At_Left_Support(self.solved_member_forces[element + 1][1])
-            member.Reaction_Add_Moment_At_Left_Support(self.solved_member_forces[element + 1][2])
+            member.Reaction_Add_Axial_At_Left_Support(
+                self.solved_member_forces[element + 1][0]
+            )
+            member.Reaction_Add_Shear_At_Left_Support(
+                self.solved_member_forces[element + 1][1]
+            )
+            member.Reaction_Add_Moment_At_Left_Support(
+                self.solved_member_forces[element + 1][2]
+            )
 
-
-    def Draw_Frame_Setup_Matrix_Analysis(self, figure_size = None, linewidth = 2, offset = 0.12, length_of_arrow = 1.0, arrow_head_size = 0.05, arrow_line_width = 2, grid = True, node_size = 10, radius_of_arc = 0.2):
-        '''
+    def Draw_Frame_Setup_Matrix_Analysis(
+        self,
+        figure_size=None,
+        linewidth=2,
+        offset=0.12,
+        length_of_arrow=1.0,
+        arrow_head_size=0.05,
+        arrow_line_width=2,
+        grid=True,
+        node_size=10,
+        radius_of_arc=0.2,
+    ):
+        """
         Draws the Truss as initialized by the class
-        
+
         Parameters
         ----------
-        
+
         figure_size: array
                     size of the plot's figure in x, y heights.
         length_of_arrow: float
@@ -1394,13 +1568,12 @@ class Frame_2D:
                         width of force vector line. default value is 2.0
         grid: boolean
               activates gridlines. default value is False
-        '''
-        
-        
+        """
+
         nodes = self.nodes
         elements = self.elements
         supports = self.supports
-        forces = self.forces      
+        forces = self.forces
         areas = self.areas
         moment_releases_coordinates = self.moment_releases_coordinates
 
@@ -1410,10 +1583,10 @@ class Frame_2D:
         average_area = np.array(average_area)
         average_area = np.average(average_area)
 
-        plt.figure(figsize = figure_size)
+        plt.figure(figsize=figure_size)
         plt.grid(grid)
         ax = plt.gca()
-       
+
         # plotting nodes and members
         for element in elements:
             from_node = elements[element][0]
@@ -1424,11 +1597,18 @@ class Frame_2D:
             y1 = from_point[1]
             x2 = to_point[0]
             y2 = to_point[1]
-            ax.plot([x1,x2],[y1,y2], marker = 'o', color = 'black', zorder = 5, linewidth = linewidth * areas[element] / average_area, markersize = node_size)
+            ax.plot(
+                [x1, x2],
+                [y1, y2],
+                marker="o",
+                color="black",
+                zorder=5,
+                linewidth=linewidth * areas[element] / average_area,
+                markersize=node_size,
+            )
 
         # plotting supports
         for support in supports:
-
             support_x = supports[support][0]
             support_y = supports[support][1]
             support_z = supports[support][2]
@@ -1437,97 +1617,167 @@ class Frame_2D:
             y = nodes[support][1]
 
             if support_x == 1 and support_y == 1 and support_z == 1:
-                ax.scatter(x, y, marker = 's', s = 200, c='r', zorder = 2)
+                ax.scatter(x, y, marker="s", s=200, c="r", zorder=2)
             elif support_x == 1 and support_y == 1 and support_z == 0:
-                ax.scatter(x, y, marker = '^', s = 200, c='r', zorder = 2)
-            else: 
-                ax.scatter(x, y, marker = 'o', s = 200, c='y', zorder = 2)
-    
+                ax.scatter(x, y, marker="^", s=200, c="r", zorder=2)
+            else:
+                ax.scatter(x, y, marker="o", s=200, c="y", zorder=2)
+
         # plotting node labels
         # offset = 0.12
-        
+
         for node in nodes:
-            ax.annotate(node, (nodes[node][0]+offset, nodes[node][1]+offset), zorder = 10, c='black')
-            
+            ax.annotate(
+                node,
+                (nodes[node][0] + offset, nodes[node][1] + offset),
+                zorder=10,
+                c="black",
+            )
+
         # plotting member labels
         for element in elements:
             fromNode = elements[element][0]
             toNode = elements[element][1]
             from_point = nodes[fromNode]
             to_point = nodes[toNode]
-            
-            middlePoint = [abs((to_point[0] - from_point[0])/2) + min(from_point[0], to_point[0]), 
-                           abs((to_point[1] - from_point[1])/2) + min(from_point[1], to_point[1])]
-            
-            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder = 10, c = 'b')
-            
+
+            middlePoint = [
+                abs((to_point[0] - from_point[0]) / 2)
+                + min(from_point[0], to_point[0]),
+                abs((to_point[1] - from_point[1]) / 2)
+                + min(from_point[1], to_point[1]),
+            ]
+
+            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder=10, c="b")
+
         # plotting force vectors
         # loop all x-direction forces
         for force in forces:
             x = nodes[force][0]
             y = nodes[force][1]
 
-            f_x = np.round(forces[force][0],2)
-            f_y = np.round(forces[force][1],2)
-            M_x = np.round(forces[force][2],2)
+            f_x = np.round(forces[force][0], 2)
+            f_y = np.round(forces[force][1], 2)
+            M_x = np.round(forces[force][2], 2)
 
             # plot arrow x-direction
             if f_x > 0:
-                ax.arrow(x - length_of_arrow, y, length_of_arrow, 0, 
-                          shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
-                          linewidth = arrow_line_width)
-                ax.annotate(f_x, ((x - length_of_arrow), y + offset), c='red')
-                ax.scatter(x - length_of_arrow, y, c='white')
+                ax.arrow(
+                    x - length_of_arrow,
+                    y,
+                    length_of_arrow,
+                    0,
+                    shape="full",
+                    head_width=arrow_head_size,
+                    length_includes_head=True,
+                    color="r",
+                    zorder=15,
+                    linewidth=arrow_line_width,
+                )
+                ax.annotate(f_x, ((x - length_of_arrow), y + offset), c="red")
+                ax.scatter(x - length_of_arrow, y, c="white")
             elif f_x < 0:
-                ax.arrow(x + length_of_arrow, y, -length_of_arrow, 0, 
-                          shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
-                          linewidth = arrow_line_width)
-                ax.annotate(f_x, ((x + length_of_arrow), y + offset), c='red')
-                ax.scatter(x + length_of_arrow,y, c='white')
+                ax.arrow(
+                    x + length_of_arrow,
+                    y,
+                    -length_of_arrow,
+                    0,
+                    shape="full",
+                    head_width=arrow_head_size,
+                    length_includes_head=True,
+                    color="r",
+                    zorder=15,
+                    linewidth=arrow_line_width,
+                )
+                ax.annotate(f_x, ((x + length_of_arrow), y + offset), c="red")
+                ax.scatter(x + length_of_arrow, y, c="white")
             else:
                 pass
 
             # plot arrow y-direction
             if f_y > 0:
-                ax.arrow(x, y - length_of_arrow, 0, length_of_arrow,
-                          shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
-                          linewidth = arrow_line_width)
-                ax.annotate(f_y, (x + offset, (y - length_of_arrow)), c='red') 
-                ax.scatter(x,y - length_of_arrow, c='white')
+                ax.arrow(
+                    x,
+                    y - length_of_arrow,
+                    0,
+                    length_of_arrow,
+                    shape="full",
+                    head_width=arrow_head_size,
+                    length_includes_head=True,
+                    color="r",
+                    zorder=15,
+                    linewidth=arrow_line_width,
+                )
+                ax.annotate(f_y, (x + offset, (y - length_of_arrow)), c="red")
+                ax.scatter(x, y - length_of_arrow, c="white")
             elif f_y < 0:
-                ax.arrow(x, y + length_of_arrow, 0, -length_of_arrow, 
-                          shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
-                          linewidth = arrow_line_width)
-                ax.annotate(f_y, (x + offset, (y + length_of_arrow)), c='red')
-                ax.scatter(x,y + length_of_arrow, c='white')
+                ax.arrow(
+                    x,
+                    y + length_of_arrow,
+                    0,
+                    -length_of_arrow,
+                    shape="full",
+                    head_width=arrow_head_size,
+                    length_includes_head=True,
+                    color="r",
+                    zorder=15,
+                    linewidth=arrow_line_width,
+                )
+                ax.annotate(f_y, (x + offset, (y + length_of_arrow)), c="red")
+                ax.scatter(x, y + length_of_arrow, c="white")
             else:
                 pass
 
             # plot moment arrows
             if M_x > 0:
-                self.__drawCirc(ax,radius_of_arc,x,y,0,180,lw=arrow_line_width,direction="Positive")
-                ax.annotate(M_x, (x, (y + radius_of_arc/1.5)), c='green')
+                self.__drawCirc(
+                    ax,
+                    radius_of_arc,
+                    x,
+                    y,
+                    0,
+                    180,
+                    lw=arrow_line_width,
+                    direction="Positive",
+                )
+                ax.annotate(M_x, (x, (y + radius_of_arc / 1.5)), c="green")
             elif M_x < 0:
-                self.__drawCirc(ax,radius_of_arc,x,y,0,180,lw=arrow_line_width,direction="Negative")
-                ax.annotate(M_x, (x, (y + radius_of_arc/1.5)), c='green')
+                self.__drawCirc(
+                    ax,
+                    radius_of_arc,
+                    x,
+                    y,
+                    0,
+                    180,
+                    lw=arrow_line_width,
+                    direction="Negative",
+                )
+                ax.annotate(M_x, (x, (y + radius_of_arc / 1.5)), c="green")
             else:
                 pass
-            
+
         # Plot Member Release Coordinates
         for member_release in moment_releases_coordinates:
-            ax.scatter(member_release[0], member_release[1], color = 'lime', s = node_size * 10, zorder = 20)
+            ax.scatter(
+                member_release[0],
+                member_release[1],
+                color="lime",
+                s=node_size * 10,
+                zorder=20,
+            )
 
-        ax.axis('equal')
+        ax.axis("equal")
         plt.show()
 
-
-    def Draw_Frame_Displacements_(self, linewidth = 2, magnification_factor = 100, figure_size = None, offset = 0.12):
-        '''
+    def Draw_Frame_Displacements_(
+        self, linewidth=2, magnification_factor=100, figure_size=None, offset=0.12
+    ):
+        """
         Draws the Truss displacements after solving the truss
-        
+
         Parameters
         ----------
-        
+
         figure_size: array
                     size of the plot's figure in x, y heights.
         length_of_arrow: float
@@ -1536,7 +1786,7 @@ class Frame_2D:
                         width of force vector arrow head. default value is 0.1
         arrow_line_width: float
                         width of force vector line. default value is 2.0
-        '''
+        """
 
         nodes = self.nodes
         elements = self.elements
@@ -1545,12 +1795,16 @@ class Frame_2D:
         new_nodes = {}
         for _ in self.displacements_:
             for node in nodes:
-                x_dist = self.displacements_[node][0] * magnification_factor + nodes[node][0]
-                y_dist = self.displacements_[node][1] * magnification_factor + nodes[node][1]
+                x_dist = (
+                    self.displacements_[node][0] * magnification_factor + nodes[node][0]
+                )
+                y_dist = (
+                    self.displacements_[node][1] * magnification_factor + nodes[node][1]
+                )
                 new_nodes.update({node: [x_dist, y_dist]})
 
-        plt.figure(figsize = figure_size)
-       
+        plt.figure(figsize=figure_size)
+
         # Plotting Old nodes
         # plotting nodes and members
         for element in dict(elements):
@@ -1562,8 +1816,17 @@ class Frame_2D:
             y1 = from_point[1]
             x2 = to_point[0]
             y2 = to_point[1]
-            plt.plot([x1,x2],[y1,y2], marker = 'o', color = 'black', zorder = 5, linestyle = '--', alpha = 0.10, linewidth = linewidth)
-    
+            plt.plot(
+                [x1, x2],
+                [y1, y2],
+                marker="o",
+                color="black",
+                zorder=5,
+                linestyle="--",
+                alpha=0.10,
+                linewidth=linewidth,
+            )
+
         # Plotting New nodes
         # plotting nodes and members
         for element in dict(elements):
@@ -1575,11 +1838,17 @@ class Frame_2D:
             y1 = from_point[1]
             x2 = to_point[0]
             y2 = to_point[1]
-            plt.plot([x1,x2],[y1,y2], marker = 'o', color = 'black', zorder = 5, linewidth = linewidth)
+            plt.plot(
+                [x1, x2],
+                [y1, y2],
+                marker="o",
+                color="black",
+                zorder=5,
+                linewidth=linewidth,
+            )
 
         # plotting supports
         for support in supports:
-
             support_x = supports[support][0]
             support_y = supports[support][1]
             support_z = supports[support][2]
@@ -1588,33 +1857,42 @@ class Frame_2D:
             y = new_nodes[support][1]
 
             if support_x == 1 and support_y == 1 and support_z == 1:
-                plt.scatter(x, y, marker = 's', s = 200, c='r', zorder = 2)
+                plt.scatter(x, y, marker="s", s=200, c="r", zorder=2)
             elif support_x == 1 and support_y == 1 and support_z == 0:
-                plt.scatter(x, y, marker = '^', s = 200, c='r', zorder = 2)
-            else: 
-                plt.scatter(x, y, marker = 'o', s = 200, c='y', zorder = 2)
-    
+                plt.scatter(x, y, marker="^", s=200, c="r", zorder=2)
+            else:
+                plt.scatter(x, y, marker="o", s=200, c="y", zorder=2)
+
         # plotting node labels
         # offset = 0.12
-        
+
         for node in new_nodes:
-            plt.annotate(node, (new_nodes[node][0]+offset, new_nodes[node][1]+offset), zorder = 10, c='black')
-            
+            plt.annotate(
+                node,
+                (new_nodes[node][0] + offset, new_nodes[node][1] + offset),
+                zorder=10,
+                c="black",
+            )
+
         # plotting member labels
         for element in elements:
             fromNode = elements[element][0]
             toNode = elements[element][1]
             from_point = new_nodes[fromNode]
             to_point = new_nodes[toNode]
-            
-            middlePoint = [abs((to_point[0] - from_point[0])/2) + min(from_point[0], to_point[0]), 
-                           abs((to_point[1] - from_point[1])/2) + min(from_point[1], to_point[1])]
-            
-            plt.annotate(element, (middlePoint[0], middlePoint[1]), zorder = 10, c = 'b')
+
+            middlePoint = [
+                abs((to_point[0] - from_point[0]) / 2)
+                + min(from_point[0], to_point[0]),
+                abs((to_point[1] - from_point[1]) / 2)
+                + min(from_point[1], to_point[1]),
+            ]
+
+            plt.annotate(element, (middlePoint[0], middlePoint[1]), zorder=10, c="b")
 
         plt.gca().axes.get_xaxis().set_visible(False)
         plt.gca().axes.get_yaxis().set_visible(False)
-        plt.axis('equal')
+        plt.axis("equal")
         plt.show()
 
     def __Reactions(self, reactions, supports):
@@ -1623,55 +1901,95 @@ class Frame_2D:
 
         reactions_dict = {}
         for support in supports:
-            reactions_dict.update({support: [float(forces_dict[3 * support - 2]), 
-                                             float(forces_dict[3 * support-1]), 
-                                             float(forces_dict[3 * support])]})
+            reactions_dict.update(
+                {
+                    support: [
+                        float(forces_dict[3 * support - 2]),
+                        float(forces_dict[3 * support - 1]),
+                        float(forces_dict[3 * support]),
+                    ]
+                }
+            )
 
         return reactions_dict
 
-    def __drawCirc(self, ax,radius,centX,centY,angle_,theta2_,color_='green',lw=2,direction="Positive"):
+    def __drawCirc(
+        self,
+        ax,
+        radius,
+        centX,
+        centY,
+        angle_,
+        theta2_,
+        color_="green",
+        lw=2,
+        direction="Positive",
+    ):
         # Arc
-        arc = Arc((centX,centY),radius,radius,angle=angle_,
-            theta1=0,theta2=theta2_,capstyle='round',linestyle='-',lw=lw,color=color_)
+        arc = Arc(
+            (centX, centY),
+            radius,
+            radius,
+            angle=angle_,
+            theta1=0,
+            theta2=theta2_,
+            capstyle="round",
+            linestyle="-",
+            lw=lw,
+            color=color_,
+        )
         ax.add_patch(arc)
 
-
         # Create the arrow head
-        startX = centX-(radius/2)*np.cos(rad(theta2_+angle_))
-        startY = centY-(radius/2)*np.sin(rad(theta2_+angle_))
-        endX=centX+(radius/2)*np.cos(rad(theta2_+angle_)) #Do trig to determine end position
-        endY=centY+(radius/2)*np.sin(rad(theta2_+angle_))
+        startX = centX - (radius / 2) * np.cos(rad(theta2_ + angle_))
+        startY = centY - (radius / 2) * np.sin(rad(theta2_ + angle_))
+        endX = centX + (radius / 2) * np.cos(
+            rad(theta2_ + angle_)
+        )  # Do trig to determine end position
+        endY = centY + (radius / 2) * np.sin(rad(theta2_ + angle_))
 
-        if direction=="Positive":
-            ax.add_patch(                    #Create triangle as arrow head
+        if direction == "Positive":
+            ax.add_patch(  # Create triangle as arrow head
                 RegularPolygon(
-                    xy=(endX, endY),            # (x,y)
-                    numVertices=3,                       # number of vertices
-                    radius=radius/9,                # radius
-                    orientation=rad(angle_+theta2_),     # orientation
-                    color=color_
+                    xy=(endX, endY),  # (x,y)
+                    numVertices=3,  # number of vertices
+                    radius=radius / 9,  # radius
+                    orientation=rad(angle_ + theta2_),  # orientation
+                    color=color_,
                 )
             )
         else:
-            ax.add_patch(                    #Create triangle as arrow head
+            ax.add_patch(  # Create triangle as arrow head
                 RegularPolygon(
-                    xy=(startX, startY),            # (x,y)
-                    numVertices=3,                       # number of vertices
-                    radius=radius/9,                # radius
-                    orientation=rad(angle_+theta2_),     # orientation
-                    color=color_
+                    xy=(startX, startY),  # (x,y)
+                    numVertices=3,  # number of vertices
+                    radius=radius / 9,  # radius
+                    orientation=rad(angle_ + theta2_),  # orientation
+                    color=color_,
                 )
             )
-        # ax.set_xlim([centX-radius,centY+radius]) and ax.set_ylim([centY-radius,centY+radius]) 
+        # ax.set_xlim([centX-radius,centY+radius]) and ax.set_ylim([centY-radius,centY+radius])
         # Make sure you keep the axes scaled or else arrow will distort
 
-    def Draw_Reactions_(self, figure_size = None, linewidth = 2, offset = 0.12, length_of_arrow = 1.0, arrow_head_size = 0.05, arrow_line_width = 2, grid = True, node_size = 10, radius_of_arc = 0.2, show_ext_forces = False):
-        '''
+    def Draw_Reactions_(
+        self,
+        figure_size=None,
+        linewidth=2,
+        offset=0.12,
+        length_of_arrow=1.0,
+        arrow_head_size=0.05,
+        arrow_line_width=2,
+        grid=True,
+        node_size=10,
+        radius_of_arc=0.2,
+        show_ext_forces=False,
+    ):
+        """
         Draws the Truss as initialized by the class
-        
+
         Parameters
         ----------
-        
+
         figure_size: array
                     size of the plot's figure in x, y heights.
         length_of_arrow: float
@@ -1682,13 +2000,12 @@ class Frame_2D:
                         width of force vector line. default value is 2.0
         grid: boolean
               activates gridlines. default value is False
-        '''
-        
-        
+        """
+
         nodes = self.nodes
         elements = self.elements
         supports = self.supports
-        forces = self.forces      
+        forces = self.forces
         areas = self.areas
         moment_releases_coordinates = self.moment_releases_coordinates
         reactions = self.reactions_
@@ -1699,10 +2016,10 @@ class Frame_2D:
         average_area = np.array(average_area)
         average_area = np.average(average_area)
 
-        plt.figure(figsize = figure_size)
+        plt.figure(figsize=figure_size)
         plt.grid(grid)
         ax = plt.gca()
-       
+
         # plotting nodes and members
         for element in elements:
             from_node = elements[element][0]
@@ -1713,11 +2030,18 @@ class Frame_2D:
             y1 = from_point[1]
             x2 = to_point[0]
             y2 = to_point[1]
-            ax.plot([x1,x2],[y1,y2], marker = 'o', color = 'black', zorder = 5, linewidth = linewidth * areas[element] / average_area, markersize = node_size)
+            ax.plot(
+                [x1, x2],
+                [y1, y2],
+                marker="o",
+                color="black",
+                zorder=5,
+                linewidth=linewidth * areas[element] / average_area,
+                markersize=node_size,
+            )
 
         # plotting supports
         for support in supports:
-
             support_x = supports[support][0]
             support_y = supports[support][1]
             support_z = supports[support][2]
@@ -1726,32 +2050,35 @@ class Frame_2D:
             y = nodes[support][1]
 
             if support_x == 1 and support_y == 1 and support_z == 1:
-                ax.scatter(x, y, marker = 's', s = 200, c='r', zorder = 2)
+                ax.scatter(x, y, marker="s", s=200, c="r", zorder=2)
             elif support_x == 1 and support_y == 1 and support_z == 0:
-                ax.scatter(x, y, marker = '^', s = 200, c='r', zorder = 2)
-            else: 
-                ax.scatter(x, y, marker = 'o', s = 200, c='y', zorder = 2)
+                ax.scatter(x, y, marker="^", s=200, c="r", zorder=2)
+            else:
+                ax.scatter(x, y, marker="o", s=200, c="y", zorder=2)
 
-        
-    
         # plotting node labels
         # offset = 0.12
-        
+
         for node in nodes:
-            ax.annotate(node, (nodes[node][0]+offset, nodes[node][1]+offset), zorder = 10, c='black')
-            
+            ax.annotate(
+                node,
+                (nodes[node][0] + offset, nodes[node][1] + offset),
+                zorder=10,
+                c="black",
+            )
+
         # plotting member labels
         # for element in elements:
         #     fromNode = elements[element][0]
         #     toNode = elements[element][1]
         #     from_point = nodes[fromNode]
         #     to_point = nodes[toNode]
-            
-        #     middlePoint = [abs((to_point[0] - from_point[0])/2) + min(from_point[0], to_point[0]), 
+
+        #     middlePoint = [abs((to_point[0] - from_point[0])/2) + min(from_point[0], to_point[0]),
         #                    abs((to_point[1] - from_point[1])/2) + min(from_point[1], to_point[1])]
-            
+
         #     ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder = 10, c = 'b')
-            
+
         # plotting force vectors
         # loop all x-direction forces
         if show_ext_forces:
@@ -1759,55 +2086,115 @@ class Frame_2D:
                 x = nodes[force][0]
                 y = nodes[force][1]
 
-                f_x = np.round(forces[force][0],2)
-                f_y = np.round(forces[force][1],2)
-                M_x = np.round(forces[force][2],2)
+                f_x = np.round(forces[force][0], 2)
+                f_y = np.round(forces[force][1], 2)
+                M_x = np.round(forces[force][2], 2)
 
                 # plot arrow x-direction
                 if f_x > 0:
-                    ax.arrow(x - length_of_arrow, y, length_of_arrow, 0, 
-                            shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
-                            linewidth = arrow_line_width)
-                    ax.annotate(f_x, ((x - length_of_arrow), y + offset), c='red')
-                    ax.scatter(x - length_of_arrow, y, c='white')
+                    ax.arrow(
+                        x - length_of_arrow,
+                        y,
+                        length_of_arrow,
+                        0,
+                        shape="full",
+                        head_width=arrow_head_size,
+                        length_includes_head=True,
+                        color="r",
+                        zorder=15,
+                        linewidth=arrow_line_width,
+                    )
+                    ax.annotate(f_x, ((x - length_of_arrow), y + offset), c="red")
+                    ax.scatter(x - length_of_arrow, y, c="white")
                 elif f_x < 0:
-                    ax.arrow(x + length_of_arrow, y, -length_of_arrow, 0, 
-                            shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
-                            linewidth = arrow_line_width)
-                    ax.annotate(f_x, ((x + length_of_arrow), y + offset), c='red')
-                    ax.scatter(x + length_of_arrow,y, c='white')
+                    ax.arrow(
+                        x + length_of_arrow,
+                        y,
+                        -length_of_arrow,
+                        0,
+                        shape="full",
+                        head_width=arrow_head_size,
+                        length_includes_head=True,
+                        color="r",
+                        zorder=15,
+                        linewidth=arrow_line_width,
+                    )
+                    ax.annotate(f_x, ((x + length_of_arrow), y + offset), c="red")
+                    ax.scatter(x + length_of_arrow, y, c="white")
                 else:
                     pass
 
                 # plot arrow y-direction
                 if f_y > 0:
-                    ax.arrow(x, y - length_of_arrow, 0, length_of_arrow,
-                            shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
-                            linewidth = arrow_line_width)
-                    ax.annotate(f_y, (x + offset, (y - length_of_arrow)), c='red') 
-                    ax.scatter(x,y - length_of_arrow, c='white')
+                    ax.arrow(
+                        x,
+                        y - length_of_arrow,
+                        0,
+                        length_of_arrow,
+                        shape="full",
+                        head_width=arrow_head_size,
+                        length_includes_head=True,
+                        color="r",
+                        zorder=15,
+                        linewidth=arrow_line_width,
+                    )
+                    ax.annotate(f_y, (x + offset, (y - length_of_arrow)), c="red")
+                    ax.scatter(x, y - length_of_arrow, c="white")
                 elif f_y < 0:
-                    ax.arrow(x, y + length_of_arrow, 0, -length_of_arrow, 
-                            shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
-                            linewidth = arrow_line_width)
-                    ax.annotate(f_y, (x + offset, (y + length_of_arrow)), c='red')
-                    ax.scatter(x,y + length_of_arrow, c='white')
+                    ax.arrow(
+                        x,
+                        y + length_of_arrow,
+                        0,
+                        -length_of_arrow,
+                        shape="full",
+                        head_width=arrow_head_size,
+                        length_includes_head=True,
+                        color="r",
+                        zorder=15,
+                        linewidth=arrow_line_width,
+                    )
+                    ax.annotate(f_y, (x + offset, (y + length_of_arrow)), c="red")
+                    ax.scatter(x, y + length_of_arrow, c="white")
                 else:
                     pass
 
                 # plot moment arrows
                 if M_x > 0:
-                    self.__drawCirc(ax,radius_of_arc,x,y,0,180,lw=arrow_line_width,direction="Positive")
-                    ax.annotate(M_x, (x, (y + radius_of_arc/1.5)), c='green')
+                    self.__drawCirc(
+                        ax,
+                        radius_of_arc,
+                        x,
+                        y,
+                        0,
+                        180,
+                        lw=arrow_line_width,
+                        direction="Positive",
+                    )
+                    ax.annotate(M_x, (x, (y + radius_of_arc / 1.5)), c="green")
                 elif M_x < 0:
-                    self.__drawCirc(ax,radius_of_arc,x,y,0,180,lw=arrow_line_width,direction="Negative")
-                    ax.annotate(M_x, (x, (y + radius_of_arc/1.5)), c='green')
+                    self.__drawCirc(
+                        ax,
+                        radius_of_arc,
+                        x,
+                        y,
+                        0,
+                        180,
+                        lw=arrow_line_width,
+                        direction="Negative",
+                    )
+                    ax.annotate(M_x, (x, (y + radius_of_arc / 1.5)), c="green")
                 else:
                     pass
-            
+
         # Plot Member Release Coordinates
         for member_release in moment_releases_coordinates:
-            ax.scatter(member_release[0], member_release[1], color = 'lime', s = node_size * 10, zorder = 20)
+            ax.scatter(
+                member_release[0],
+                member_release[1],
+                color="lime",
+                s=node_size * 10,
+                zorder=20,
+            )
 
         # plotting support vectors
         # loop all x-direction forces
@@ -1815,71 +2202,133 @@ class Frame_2D:
             x = nodes[reaction][0]
             y = nodes[reaction][1]
 
-            f_x = np.round(reactions[reaction][0],2)
-            f_y = np.round(reactions[reaction][1],2)
-            M_x = np.round(reactions[reaction][2],2)
+            f_x = np.round(reactions[reaction][0], 2)
+            f_y = np.round(reactions[reaction][1], 2)
+            M_x = np.round(reactions[reaction][2], 2)
 
             # plot arrow x-direction
             if f_x > 0:
-                ax.arrow(x - length_of_arrow, y, length_of_arrow, 0, 
-                          shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
-                          linewidth = arrow_line_width)
-                ax.annotate(f_x, ((x - length_of_arrow), y + offset), c='red')
-                ax.scatter(x - length_of_arrow, y, c='white')
+                ax.arrow(
+                    x - length_of_arrow,
+                    y,
+                    length_of_arrow,
+                    0,
+                    shape="full",
+                    head_width=arrow_head_size,
+                    length_includes_head=True,
+                    color="r",
+                    zorder=15,
+                    linewidth=arrow_line_width,
+                )
+                ax.annotate(f_x, ((x - length_of_arrow), y + offset), c="red")
+                ax.scatter(x - length_of_arrow, y, c="white")
             elif f_x < 0:
-                ax.arrow(x + length_of_arrow, y, -length_of_arrow, 0, 
-                          shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
-                          linewidth = arrow_line_width)
-                ax.annotate(f_x, ((x + length_of_arrow), y + offset), c='red')
-                ax.scatter(x + length_of_arrow,y, c='white')
+                ax.arrow(
+                    x + length_of_arrow,
+                    y,
+                    -length_of_arrow,
+                    0,
+                    shape="full",
+                    head_width=arrow_head_size,
+                    length_includes_head=True,
+                    color="r",
+                    zorder=15,
+                    linewidth=arrow_line_width,
+                )
+                ax.annotate(f_x, ((x + length_of_arrow), y + offset), c="red")
+                ax.scatter(x + length_of_arrow, y, c="white")
             else:
                 pass
 
             # plot arrow y-direction
             if f_y > 0:
-                ax.arrow(x, y - length_of_arrow, 0, length_of_arrow,
-                          shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
-                          linewidth = arrow_line_width)
-                ax.annotate(f_y, (x + offset, (y - length_of_arrow)), c='red') 
-                ax.scatter(x,y - length_of_arrow, c='white')
+                ax.arrow(
+                    x,
+                    y - length_of_arrow,
+                    0,
+                    length_of_arrow,
+                    shape="full",
+                    head_width=arrow_head_size,
+                    length_includes_head=True,
+                    color="r",
+                    zorder=15,
+                    linewidth=arrow_line_width,
+                )
+                ax.annotate(f_y, (x + offset, (y - length_of_arrow)), c="red")
+                ax.scatter(x, y - length_of_arrow, c="white")
             elif f_y < 0:
-                ax.arrow(x, y + length_of_arrow, 0, -length_of_arrow, 
-                          shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
-                          linewidth = arrow_line_width)
-                ax.annotate(f_y, (x + offset, (y + length_of_arrow)), c='red')
-                ax.scatter(x,y + length_of_arrow, c='white')
+                ax.arrow(
+                    x,
+                    y + length_of_arrow,
+                    0,
+                    -length_of_arrow,
+                    shape="full",
+                    head_width=arrow_head_size,
+                    length_includes_head=True,
+                    color="r",
+                    zorder=15,
+                    linewidth=arrow_line_width,
+                )
+                ax.annotate(f_y, (x + offset, (y + length_of_arrow)), c="red")
+                ax.scatter(x, y + length_of_arrow, c="white")
             else:
                 pass
 
             # plot moment arrows
             if M_x > 0:
-                self.__drawCirc(ax,radius_of_arc,x,y,0,180,lw=arrow_line_width,direction="Positive")
-                ax.annotate(M_x, (x, (y + radius_of_arc/1.5)), c='green')
+                self.__drawCirc(
+                    ax,
+                    radius_of_arc,
+                    x,
+                    y,
+                    0,
+                    180,
+                    lw=arrow_line_width,
+                    direction="Positive",
+                )
+                ax.annotate(M_x, (x, (y + radius_of_arc / 1.5)), c="green")
             elif M_x < 0:
-                self.__drawCirc(ax,radius_of_arc,x,y,0,180,lw=arrow_line_width,direction="Negative")
-                ax.annotate(M_x, (x, (y + radius_of_arc/1.5)), c='green')
+                self.__drawCirc(
+                    ax,
+                    radius_of_arc,
+                    x,
+                    y,
+                    0,
+                    180,
+                    lw=arrow_line_width,
+                    direction="Negative",
+                )
+                ax.annotate(M_x, (x, (y + radius_of_arc / 1.5)), c="green")
             else:
                 pass
 
-        ax.axis('equal')
+        ax.axis("equal")
         plt.show()
-       
-       
-    def Draw_Moment_Diagram(self, figure_size = None, show_labels=False, grid=True, scale_factor=50, linewidth = 2, node_size = 10, dpi = 100):
-    
+
+    def Draw_Moment_Diagram(
+        self,
+        figure_size=None,
+        show_labels=False,
+        grid=True,
+        scale_factor=50,
+        linewidth=2,
+        node_size=10,
+        dpi=100,
+    ):
+
         nodes = self.nodes
         elements = self.elements
-        supports = self.supports      
+        supports = self.supports
         areas = self.areas
         linewidth = linewidth
         node_size = node_size
-        
+
         average_area = []
         for area in areas:
             average_area.append(areas[area])
         average_area = np.array(average_area)
         average_area = np.average(average_area)
-    
+
         plt.figure(figsize=figure_size, dpi=dpi)
         plt.grid(grid)
         ax = plt.gca()
@@ -1895,14 +2344,23 @@ class Frame_2D:
             y1 = from_point[1]
             x2 = to_point[0]
             y2 = to_point[1]
-            ax.plot([x1,x2],[y1,y2], marker = 'o', 
-                    color = 'black', zorder = 5, 
-                    linewidth = linewidth * areas[element] / average_area, 
-                    markersize = node_size)
-            middlePoint = [abs((to_point[0] - from_point[0])/2) + min(from_point[0], to_point[0]), 
-                abs((to_point[1] - from_point[1])/2) + min(from_point[1], to_point[1])]
-            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder = 10, c = 'b') 
-            
+            ax.plot(
+                [x1, x2],
+                [y1, y2],
+                marker="o",
+                color="black",
+                zorder=5,
+                linewidth=linewidth * areas[element] / average_area,
+                markersize=node_size,
+            )
+            middlePoint = [
+                abs((to_point[0] - from_point[0]) / 2)
+                + min(from_point[0], to_point[0]),
+                abs((to_point[1] - from_point[1]) / 2)
+                + min(from_point[1], to_point[1]),
+            ]
+            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder=10, c="b")
+
         for member in self.members_list:
             x = []
             y = []
@@ -1911,24 +2369,28 @@ class Frame_2D:
                 y.append(array[1])
 
             # Rotation angle (in degrees)
-            theta_deg = np.arctan2(y[1]-y[0],x[1]-x[0]) * 180 / np.pi
+            theta_deg = np.arctan2(y[1] - y[0], x[1] - x[0]) * 180 / np.pi
             theta_rad = np.deg2rad(theta_deg)  # convert to radians
 
             # Translation (dx, dy)
             dx = x[0]
             dy = y[0]
-            
+
             # Scale factor
             scaled_member_moment = member.moment / scale_factor
 
             # Apply rotation
-            x_rot = (member.x_array * np.cos(theta_rad) - scaled_member_moment * np.sin(theta_rad))
-            y_rot = (member.x_array * np.sin(theta_rad) + scaled_member_moment * np.cos(theta_rad))
+            x_rot = member.x_array * np.cos(theta_rad) - scaled_member_moment * np.sin(
+                theta_rad
+            )
+            y_rot = member.x_array * np.sin(theta_rad) + scaled_member_moment * np.cos(
+                theta_rad
+            )
 
             # Apply translation
             x_final = x_rot + dx
             y_final = y_rot + dy
-            
+
             # insert
             x_final = np.insert(x_final, 0, x[0])
             last_fron_end_index = len(x_final)
@@ -1939,22 +2401,26 @@ class Frame_2D:
             y_final = np.insert(y_final, last_fron_end_index, y[-1])
 
             # Plot
-            ax.plot(x_final, y_final, 'b-', linewidth = linewidth * areas[element] / average_area)
-            
+            ax.plot(
+                x_final,
+                y_final,
+                "b-",
+                linewidth=linewidth * areas[element] / average_area,
+            )
+
             moment = np.insert(member.moment, 0, x[0])
             last_fron_end_index = len(moment)
             moment = np.insert(moment, last_fron_end_index, x[-1])
-            
+
             if show_labels:
                 first = 0
                 last = int(len(moment) - 1)
                 for i, text in enumerate(moment):
                     if i != first and i != last:
-                        plt.annotate(round(text,2), (x_final[i], y_final[i]))
-            
+                        plt.annotate(round(text, 2), (x_final[i], y_final[i]))
+
             # plotting supports
             for support in supports:
-
                 support_x = supports[support][0]
                 support_y = supports[support][1]
                 support_z = supports[support][2]
@@ -1963,33 +2429,41 @@ class Frame_2D:
                 y = nodes[support][1]
 
                 if support_x == 1 and support_y == 1 and support_z == 1:
-                    ax.scatter(x, y, marker = 's', s = 200, c='r', zorder = 2)
+                    ax.scatter(x, y, marker="s", s=200, c="r", zorder=2)
                 elif support_x == 1 and support_y == 1 and support_z == 0:
-                    ax.scatter(x, y, marker = '^', s = 200, c='r', zorder = 2)
-                else: 
-                    ax.scatter(x, y, marker = 'o', s = 200, c='y', zorder = 2)
+                    ax.scatter(x, y, marker="^", s=200, c="r", zorder=2)
+                else:
+                    ax.scatter(x, y, marker="o", s=200, c="y", zorder=2)
 
-        ax.axis('equal')
+        ax.axis("equal")
         ax.grid(True)
-        plt.title('Moment Diagram')
+        plt.title("Moment Diagram")
         plt.show()
 
+    def Draw_Shear_Diagram(
+        self,
+        figure_size=None,
+        show_labels=False,
+        grid=True,
+        scale_factor=50,
+        linewidth=2,
+        node_size=10,
+        dpi=100,
+    ):
 
-    def Draw_Shear_Diagram(self, figure_size = None, show_labels=False, grid=True, scale_factor=50, linewidth = 2, node_size = 10, dpi = 100):
-    
         nodes = self.nodes
         elements = self.elements
-        supports = self.supports      
+        supports = self.supports
         areas = self.areas
         linewidth = linewidth
         node_size = node_size
-        
+
         average_area = []
         for area in areas:
             average_area.append(areas[area])
         average_area = np.array(average_area)
         average_area = np.average(average_area)
-    
+
         plt.figure(figsize=figure_size, dpi=dpi)
         plt.grid(grid)
         ax = plt.gca()
@@ -2005,13 +2479,22 @@ class Frame_2D:
             y1 = from_point[1]
             x2 = to_point[0]
             y2 = to_point[1]
-            ax.plot([x1,x2],[y1,y2], marker = 'o', 
-                    color = 'black', zorder = 5, 
-                    linewidth = linewidth * areas[element] / average_area, 
-                    markersize = node_size)
-            middlePoint = [abs((to_point[0] - from_point[0])/2) + min(from_point[0], to_point[0]), 
-                abs((to_point[1] - from_point[1])/2) + min(from_point[1], to_point[1])]
-            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder = 10, c = 'b') 
+            ax.plot(
+                [x1, x2],
+                [y1, y2],
+                marker="o",
+                color="black",
+                zorder=5,
+                linewidth=linewidth * areas[element] / average_area,
+                markersize=node_size,
+            )
+            middlePoint = [
+                abs((to_point[0] - from_point[0]) / 2)
+                + min(from_point[0], to_point[0]),
+                abs((to_point[1] - from_point[1]) / 2)
+                + min(from_point[1], to_point[1]),
+            ]
+            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder=10, c="b")
 
         for member in self.members_list:
             x = []
@@ -2021,24 +2504,28 @@ class Frame_2D:
                 y.append(array[1])
 
             # Rotation angle (in degrees)
-            theta_deg = np.arctan2(y[1]-y[0],x[1]-x[0]) * 180 / np.pi
+            theta_deg = np.arctan2(y[1] - y[0], x[1] - x[0]) * 180 / np.pi
             theta_rad = np.deg2rad(theta_deg)  # convert to radians
 
             # Translation (dx, dy)
             dx = x[0]
             dy = y[0]
-            
+
             # Scale factor
             scaled_member_shear = member.shear / scale_factor
 
             # Apply rotation
-            x_rot = (member.x_array * np.cos(theta_rad) - scaled_member_shear * np.sin(theta_rad))
-            y_rot = (member.x_array * np.sin(theta_rad) + scaled_member_shear * np.cos(theta_rad))
+            x_rot = member.x_array * np.cos(theta_rad) - scaled_member_shear * np.sin(
+                theta_rad
+            )
+            y_rot = member.x_array * np.sin(theta_rad) + scaled_member_shear * np.cos(
+                theta_rad
+            )
 
             # Apply translation
             x_final = x_rot + dx
             y_final = y_rot + dy
-            
+
             # insert
             x_final = np.insert(x_final, 0, x[0])
             last_fron_end_index = len(x_final)
@@ -2049,22 +2536,26 @@ class Frame_2D:
             y_final = np.insert(y_final, last_fron_end_index, y[-1])
 
             # Plot
-            ax.plot(x_final, y_final, 'm-', linewidth = linewidth * areas[element] / average_area)
-            
+            ax.plot(
+                x_final,
+                y_final,
+                "m-",
+                linewidth=linewidth * areas[element] / average_area,
+            )
+
             shear = np.insert(member.shear, 0, x[0])
             last_fron_end_index = len(shear)
             shear = np.insert(shear, last_fron_end_index, x[-1])
-            
+
             if show_labels:
                 first = 0
                 last = int(len(shear) - 1)
                 for i, text in enumerate(shear):
                     if i != first and i != last:
-                        plt.annotate(round(text,2), (x_final[i], y_final[i]))
-            
+                        plt.annotate(round(text, 2), (x_final[i], y_final[i]))
+
             # plotting supports
             for support in supports:
-
                 support_x = supports[support][0]
                 support_y = supports[support][1]
                 support_z = supports[support][2]
@@ -2073,33 +2564,41 @@ class Frame_2D:
                 y = nodes[support][1]
 
                 if support_x == 1 and support_y == 1 and support_z == 1:
-                    ax.scatter(x, y, marker = 's', s = 200, c='r', zorder = 2)
+                    ax.scatter(x, y, marker="s", s=200, c="r", zorder=2)
                 elif support_x == 1 and support_y == 1 and support_z == 0:
-                    ax.scatter(x, y, marker = '^', s = 200, c='r', zorder = 2)
-                else: 
-                    ax.scatter(x, y, marker = 'o', s = 200, c='y', zorder = 2)
+                    ax.scatter(x, y, marker="^", s=200, c="r", zorder=2)
+                else:
+                    ax.scatter(x, y, marker="o", s=200, c="y", zorder=2)
 
-        ax.axis('equal')
+        ax.axis("equal")
         ax.grid(True)
-        plt.title('Shear Diagram')
+        plt.title("Shear Diagram")
         plt.show()
 
+    def Draw_Axial_Diagram(
+        self,
+        figure_size=None,
+        show_labels=False,
+        grid=True,
+        scale_factor=300,
+        linewidth=2,
+        node_size=10,
+        dpi=100,
+    ):
 
-    def Draw_Axial_Diagram(self, figure_size = None, show_labels=False, grid=True, scale_factor=300, linewidth = 2, node_size = 10, dpi=100):
-    
         nodes = self.nodes
         elements = self.elements
-        supports = self.supports      
+        supports = self.supports
         areas = self.areas
         linewidth = linewidth
         node_size = node_size
-        
+
         average_area = []
         for area in areas:
             average_area.append(areas[area])
         average_area = np.array(average_area)
         average_area = np.average(average_area)
-    
+
         plt.figure(figsize=figure_size, dpi=dpi)
         plt.grid(grid)
         ax = plt.gca()
@@ -2115,13 +2614,22 @@ class Frame_2D:
             y1 = from_point[1]
             x2 = to_point[0]
             y2 = to_point[1]
-            ax.plot([x1,x2],[y1,y2], marker = 'o', 
-                    color = 'black', zorder = 5, 
-                    linewidth = linewidth * areas[element] / average_area, 
-                    markersize = node_size)
-            middlePoint = [abs((to_point[0] - from_point[0])/2) + min(from_point[0], to_point[0]), 
-                abs((to_point[1] - from_point[1])/2) + min(from_point[1], to_point[1])]
-            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder = 10, c = 'b') 
+            ax.plot(
+                [x1, x2],
+                [y1, y2],
+                marker="o",
+                color="black",
+                zorder=5,
+                linewidth=linewidth * areas[element] / average_area,
+                markersize=node_size,
+            )
+            middlePoint = [
+                abs((to_point[0] - from_point[0]) / 2)
+                + min(from_point[0], to_point[0]),
+                abs((to_point[1] - from_point[1]) / 2)
+                + min(from_point[1], to_point[1]),
+            ]
+            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder=10, c="b")
 
         for member in self.members_list:
             x = []
@@ -2131,24 +2639,28 @@ class Frame_2D:
                 y.append(array[1])
 
             # Rotation angle (in degrees)
-            theta_deg = np.arctan2(y[1]-y[0],x[1]-x[0]) * 180 / np.pi
+            theta_deg = np.arctan2(y[1] - y[0], x[1] - x[0]) * 180 / np.pi
             theta_rad = np.deg2rad(theta_deg)  # convert to radians
 
             # Translation (dx, dy)
             dx = x[0]
             dy = y[0]
-            
+
             # Scale factor
             scaled_member_axial = member.axial / scale_factor
 
             # Apply rotation
-            x_rot = (member.x_array * np.cos(theta_rad) - scaled_member_axial * np.sin(theta_rad))
-            y_rot = (member.x_array * np.sin(theta_rad) + scaled_member_axial * np.cos(theta_rad))
+            x_rot = member.x_array * np.cos(theta_rad) - scaled_member_axial * np.sin(
+                theta_rad
+            )
+            y_rot = member.x_array * np.sin(theta_rad) + scaled_member_axial * np.cos(
+                theta_rad
+            )
 
             # Apply translation
             x_final = x_rot + dx
             y_final = y_rot + dy
-            
+
             # insert
             x_final = np.insert(x_final, 0, x[0])
             last_fron_end_index = len(x_final)
@@ -2159,22 +2671,26 @@ class Frame_2D:
             y_final = np.insert(y_final, last_fron_end_index, y[-1])
 
             # Plot
-            ax.plot(x_final, y_final, 'r-', linewidth = linewidth * areas[element] / average_area)
-            
+            ax.plot(
+                x_final,
+                y_final,
+                "r-",
+                linewidth=linewidth * areas[element] / average_area,
+            )
+
             axial = np.insert(member.axial, 0, x[0])
             last_fron_end_index = len(axial)
             axial = np.insert(axial, last_fron_end_index, x[-1])
-            
+
             if show_labels:
                 first = 0
                 last = int(len(axial) - 1)
                 for i, text in enumerate(axial):
                     if i != first and i != last:
-                        plt.annotate(round(text,2), (x_final[i], y_final[i]))
-            
+                        plt.annotate(round(text, 2), (x_final[i], y_final[i]))
+
             # plotting supports
             for support in supports:
-
                 support_x = supports[support][0]
                 support_y = supports[support][1]
                 support_z = supports[support][2]
@@ -2183,26 +2699,37 @@ class Frame_2D:
                 y = nodes[support][1]
 
                 if support_x == 1 and support_y == 1 and support_z == 1:
-                    ax.scatter(x, y, marker = 's', s = 200, c='r', zorder = 2)
+                    ax.scatter(x, y, marker="s", s=200, c="r", zorder=2)
                 elif support_x == 1 and support_y == 1 and support_z == 0:
-                    ax.scatter(x, y, marker = '^', s = 200, c='r', zorder = 2)
-                else: 
-                    ax.scatter(x, y, marker = 'o', s = 200, c='y', zorder = 2)
+                    ax.scatter(x, y, marker="^", s=200, c="r", zorder=2)
+                else:
+                    ax.scatter(x, y, marker="o", s=200, c="y", zorder=2)
 
-        ax.axis('equal')
+        ax.axis("equal")
         ax.grid(True)
-        plt.title('Axial Diagram')
+        plt.title("Axial Diagram")
 
         plt.show()
 
-
-    def Draw_Frame_Setup(self, figure_size = None, linewidth = 2, offset = 0.12, length_of_arrow = 1.0, arrow_head_size = 0.05, arrow_line_width = 2, grid = True, node_size = 10, radius_of_arc = 1.5, scale_factor=1.0):
-        '''
+    def Draw_Frame_Setup(
+        self,
+        figure_size=None,
+        linewidth=2,
+        offset=0.12,
+        length_of_arrow=1.0,
+        arrow_head_size=0.05,
+        arrow_line_width=2,
+        grid=True,
+        node_size=10,
+        radius_of_arc=1.5,
+        scale_factor=1.0,
+    ):
+        """
         Draws the Frame as initialized by the class
-        
+
         Parameters
         ----------
-        
+
         figure_size: array
                     size of the plot's figure in x, y heights.
         length_of_arrow: float
@@ -2213,9 +2740,8 @@ class Frame_2D:
                         width of force vector line. default value is 2.0
         grid: boolean
               activates gridlines. default value is False
-        '''
-        
-        
+        """
+
         nodes = self.nodes
         elements = self.elements
         supports = self.supports
@@ -2234,10 +2760,10 @@ class Frame_2D:
         headaxislength = 4.5 * scale_factor
         headlength = 5 * scale_factor
 
-        plt.figure(figsize = figure_size)
+        plt.figure(figsize=figure_size)
         plt.grid(grid)
         ax = plt.gca()
-       
+
         # plotting nodes and members
         for element in elements:
             from_node = elements[element][0]
@@ -2248,11 +2774,18 @@ class Frame_2D:
             y1 = from_point[1]
             x2 = to_point[0]
             y2 = to_point[1]
-            ax.plot([x1,x2],[y1,y2], marker = 'o', color = 'black', zorder = 5, linewidth = linewidth * areas[element] / average_area, markersize = node_size)
+            ax.plot(
+                [x1, x2],
+                [y1, y2],
+                marker="o",
+                color="black",
+                zorder=5,
+                linewidth=linewidth * areas[element] / average_area,
+                markersize=node_size,
+            )
 
         # plotting supports
         for support in supports:
-
             support_x = supports[support][0]
             support_y = supports[support][1]
             support_z = supports[support][2]
@@ -2261,61 +2794,97 @@ class Frame_2D:
             y = nodes[support][1]
 
             if support_x == 1 and support_y == 1 and support_z == 1:
-                ax.scatter(x, y, marker = 's', s = 200, c='r', zorder = 2)
+                ax.scatter(x, y, marker="s", s=200, c="r", zorder=2)
             elif support_x == 1 and support_y == 1 and support_z == 0:
-                ax.scatter(x, y, marker = '^', s = 200, c='r', zorder = 2)
-            else: 
-                ax.scatter(x, y, marker = 'o', s = 200, c='y', zorder = 2)
-    
+                ax.scatter(x, y, marker="^", s=200, c="r", zorder=2)
+            else:
+                ax.scatter(x, y, marker="o", s=200, c="y", zorder=2)
+
         # plotting node labels
         # offset = 0.12
-        
+
         for node in nodes:
-            ax.annotate(node, (nodes[node][0]+offset, nodes[node][1]+offset), zorder = 10, c='black')
-            
+            ax.annotate(
+                node,
+                (nodes[node][0] + offset, nodes[node][1] + offset),
+                zorder=10,
+                c="black",
+            )
+
         # plotting member labels
         for element in elements:
             fromNode = elements[element][0]
             toNode = elements[element][1]
             from_point = nodes[fromNode]
             to_point = nodes[toNode]
-            
-            middlePoint = [abs((to_point[0] - from_point[0])/2) + min(from_point[0], to_point[0]), 
-                           abs((to_point[1] - from_point[1])/2) + min(from_point[1], to_point[1])]
-            
-            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder = 10, c = 'b')
-            
+
+            middlePoint = [
+                abs((to_point[0] - from_point[0]) / 2)
+                + min(from_point[0], to_point[0]),
+                abs((to_point[1] - from_point[1]) / 2)
+                + min(from_point[1], to_point[1]),
+            ]
+
+            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder=10, c="b")
+
         # Plot Member Release Coordinates
         for member_release in moment_releases_coordinates:
-            ax.scatter(member_release[0], member_release[1], color = 'lime', s = node_size * 10, zorder = 20)
-
+            ax.scatter(
+                member_release[0],
+                member_release[1],
+                color="lime",
+                s=node_size * 10,
+                zorder=20,
+            )
 
         # plotting nodal load vectors
         # loop all x-direction forces
-        if self.plot_loadings['nodal_load']:
-            for force in self.plot_loadings['nodal_load']:
+        if self.plot_loadings["nodal_load"]:
+            for force in self.plot_loadings["nodal_load"]:
                 x = nodes[force][0]
                 y = nodes[force][1]
 
-                f_x = np.round(self.plot_loadings['nodal_load'][force][0],2)
-                f_y = np.round(self.plot_loadings['nodal_load'][force][1],2)
-                M_x = np.round(self.plot_loadings['nodal_load'][force][2],2)
+                f_x = np.round(self.plot_loadings["nodal_load"][force][0], 2)
+                f_y = np.round(self.plot_loadings["nodal_load"][force][1], 2)
+                M_x = np.round(self.plot_loadings["nodal_load"][force][2], 2)
 
                 # plot arrow x-direction
                 if f_x > 0:
-                    # ax.arrow(x - length_of_arrow, y, length_of_arrow, 0, 
+                    # ax.arrow(x - length_of_arrow, y, length_of_arrow, 0,
                     #           shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
                     #           linewidth = arrow_line_width)
-                    ax.quiver(x - length_of_arrow, y, length_of_arrow, 0, angles='xy', scale_units='xy', scale=1, color='red', alpha = 1, zorder = 15)
-                    ax.annotate(f_x, ((x - length_of_arrow), y + offset), c='red')
-                    ax.scatter(x - length_of_arrow, y, c='white')
+                    ax.quiver(
+                        x - length_of_arrow,
+                        y,
+                        length_of_arrow,
+                        0,
+                        angles="xy",
+                        scale_units="xy",
+                        scale=1,
+                        color="red",
+                        alpha=1,
+                        zorder=15,
+                    )
+                    ax.annotate(f_x, ((x - length_of_arrow), y + offset), c="red")
+                    ax.scatter(x - length_of_arrow, y, c="white")
                 elif f_x < 0:
-                    # ax.arrow(x + length_of_arrow, y, -length_of_arrow, 0, 
+                    # ax.arrow(x + length_of_arrow, y, -length_of_arrow, 0,
                     #           shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
                     #           linewidth = arrow_line_width)
-                    ax.quiver(x + length_of_arrow, y, -length_of_arrow, 0, angles='xy', scale_units='xy', scale=1, color='red', alpha = 1, zorder = 15)
-                    ax.annotate(f_x, ((x + length_of_arrow), y + offset), c='red')
-                    ax.scatter(x + length_of_arrow,y, c='white')
+                    ax.quiver(
+                        x + length_of_arrow,
+                        y,
+                        -length_of_arrow,
+                        0,
+                        angles="xy",
+                        scale_units="xy",
+                        scale=1,
+                        color="red",
+                        alpha=1,
+                        zorder=15,
+                    )
+                    ax.annotate(f_x, ((x + length_of_arrow), y + offset), c="red")
+                    ax.scatter(x + length_of_arrow, y, c="white")
                 else:
                     pass
 
@@ -2324,36 +2893,84 @@ class Frame_2D:
                     # ax.arrow(x, y - length_of_arrow, 0, length_of_arrow,
                     #           shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
                     #           linewidth = arrow_line_width)
-                    ax.quiver(x, y - length_of_arrow, 0, length_of_arrow, angles='xy', scale_units='xy', scale=1, color='red', alpha = 1, zorder = 15, headwidth = headwidth, headlength = headlength, headaxislength = headaxislength, width = width)
-                    ax.annotate(f_y, (x + offset, (y - length_of_arrow)), c='red') 
-                    ax.scatter(x,y - length_of_arrow, c='white')
+                    ax.quiver(
+                        x,
+                        y - length_of_arrow,
+                        0,
+                        length_of_arrow,
+                        angles="xy",
+                        scale_units="xy",
+                        scale=1,
+                        color="red",
+                        alpha=1,
+                        zorder=15,
+                        headwidth=headwidth,
+                        headlength=headlength,
+                        headaxislength=headaxislength,
+                        width=width,
+                    )
+                    ax.annotate(f_y, (x + offset, (y - length_of_arrow)), c="red")
+                    ax.scatter(x, y - length_of_arrow, c="white")
                 elif f_y < 0:
-                    # ax.arrow(x, y + length_of_arrow, 0, -length_of_arrow, 
+                    # ax.arrow(x, y + length_of_arrow, 0, -length_of_arrow,
                     #           shape = 'full', head_width = arrow_head_size, length_includes_head = True, color='r', zorder = 15,
                     #           linewidth = arrow_line_width)
-                    ax.quiver(x, y + length_of_arrow, 0, -length_of_arrow, angles='xy', scale_units='xy', scale=1, color='red', alpha = 1, zorder = 15, headwidth = headwidth, headlength = headlength, headaxislength = headaxislength, width = width)
-                    ax.annotate(f_y, (x + offset, (y + length_of_arrow)), c='red')
-                    ax.scatter(x,y + length_of_arrow, c='white')
+                    ax.quiver(
+                        x,
+                        y + length_of_arrow,
+                        0,
+                        -length_of_arrow,
+                        angles="xy",
+                        scale_units="xy",
+                        scale=1,
+                        color="red",
+                        alpha=1,
+                        zorder=15,
+                        headwidth=headwidth,
+                        headlength=headlength,
+                        headaxislength=headaxislength,
+                        width=width,
+                    )
+                    ax.annotate(f_y, (x + offset, (y + length_of_arrow)), c="red")
+                    ax.scatter(x, y + length_of_arrow, c="white")
                 else:
                     pass
 
                 # plot moment arrows
                 if M_x > 0:
-                    self.__drawCirc(ax,radius_of_arc,x,y,0,180,lw=arrow_line_width,direction="Positive")
-                    ax.annotate(M_x, (x, (y + radius_of_arc/1.5)), c='green')
+                    self.__drawCirc(
+                        ax,
+                        radius_of_arc,
+                        x,
+                        y,
+                        0,
+                        180,
+                        lw=arrow_line_width,
+                        direction="Positive",
+                    )
+                    ax.annotate(M_x, (x, (y + radius_of_arc / 1.5)), c="green")
                 elif M_x < 0:
-                    self.__drawCirc(ax,radius_of_arc,x,y,0,180,lw=arrow_line_width,direction="Negative")
-                    ax.annotate(M_x, (x, (y + radius_of_arc/1.5)), c='green')
+                    self.__drawCirc(
+                        ax,
+                        radius_of_arc,
+                        x,
+                        y,
+                        0,
+                        180,
+                        lw=arrow_line_width,
+                        direction="Negative",
+                    )
+                    ax.annotate(M_x, (x, (y + radius_of_arc / 1.5)), c="green")
                 else:
                     pass
 
         # Plot member loadings
         for i in self.plot_loadings:
-            if isinstance(i,int):
-                nodes = self.plot_loadings[i]['nodes']
+            if isinstance(i, int):
+                nodes = self.plot_loadings[i]["nodes"]
 
                 if figure_size:
-                    scale = figure_size[0] * figure_size[1] * (scale_factor/100)
+                    scale = figure_size[0] * figure_size[1] * (scale_factor / 100)
                 else:
                     scale = 1
 
@@ -2365,60 +2982,143 @@ class Frame_2D:
                     y.append(nodes[node][1])
 
                 # For Uniform loading along y-axis Fy
-                if self.plot_loadings[i]['uniform_full_load_fy']:
+                if self.plot_loadings[i]["uniform_full_load_fy"]:
                     # x_array = np.linspace(x[0],x[1],10)
                     # y_array = np.linspace(y[0],y[1],10) + scale
                     # ax.quiver(x_array,y_array,0,-scale,angles='xy', scale_units='xy', scale=1, color='blue', alpha = 0.2, headwidth = headwidth, headlength = headlength, headaxislength = headaxislength, width = width)
-                    vertices = [(x[0], y[0]), (x[0], y[0] + scale), (x[1], y[1] + scale), (x[1], y[1])]
+                    vertices = [
+                        (x[0], y[0]),
+                        (x[0], y[0] + scale),
+                        (x[1], y[1] + scale),
+                        (x[1], y[1]),
+                    ]
 
-                    if self.plot_loadings[i]['uniform_full_load_fy'][0] >=0:
-                        color = 'blue'
-                        rect = Polygon(vertices, closed=True, fill=True, alpha = 0.2, color=color)
+                    if self.plot_loadings[i]["uniform_full_load_fy"][0] >= 0:
+                        color = "blue"
+                        rect = Polygon(
+                            vertices, closed=True, fill=True, alpha=0.2, color=color
+                        )
                         ax.add_patch(rect)
-                        string = '+' + str(round(self.plot_loadings[i]['uniform_full_load_fy'][0],2)) + ', UP'
-                        ax.annotate(string, ((x[1]+x[0])/2 - scale/3, y[0] + scale/2), zorder = 10, c = 'b')
+                        string = (
+                            "+"
+                            + str(
+                                round(
+                                    self.plot_loadings[i]["uniform_full_load_fy"][0], 2
+                                )
+                            )
+                            + ", UP"
+                        )
+                        ax.annotate(
+                            string,
+                            ((x[1] + x[0]) / 2 - scale / 3, y[0] + scale / 2),
+                            zorder=10,
+                            c="b",
+                        )
                     else:
-                        color = 'red' 
-                        rect = Polygon(vertices, closed=True, fill=True, alpha = 0.2, color=color)
+                        color = "red"
+                        rect = Polygon(
+                            vertices, closed=True, fill=True, alpha=0.2, color=color
+                        )
                         ax.add_patch(rect)
-                        string = str(round(self.plot_loadings[i]['uniform_full_load_fy'][0],2)) + ', DN'
-                        ax.annotate(string, ((x[1]+x[0])/2 - scale/3, y[0] + scale/2), zorder = 10, c = 'b')
+                        string = (
+                            str(
+                                round(
+                                    self.plot_loadings[i]["uniform_full_load_fy"][0], 2
+                                )
+                            )
+                            + ", DN"
+                        )
+                        ax.annotate(
+                            string,
+                            ((x[1] + x[0]) / 2 - scale / 3, y[0] + scale / 2),
+                            zorder=10,
+                            c="b",
+                        )
 
                 # For Uniform loading along x-axis Fx
-                if self.plot_loadings[i]['uniform_full_load_fx']:
+                if self.plot_loadings[i]["uniform_full_load_fx"]:
                     # x_array = np.linspace(x[0],x[1],10) - scale
-                    # y_array = np.linspace(y[0],y[1],10) 
+                    # y_array = np.linspace(y[0],y[1],10)
                     # ax.quiver(x_array,y_array,scale,0,angles='xy', scale_units='xy', scale=1, color='blue', alpha = 0.2, headwidth = headwidth, headlength = headlength, headaxislength = headaxislength, width = width)
-                    vertices = [(x[0] - scale, y[0]), (x[0], y[0]), (x[1], y[1]), (x[1] - scale, y[1])]
+                    vertices = [
+                        (x[0] - scale, y[0]),
+                        (x[0], y[0]),
+                        (x[1], y[1]),
+                        (x[1] - scale, y[1]),
+                    ]
 
-                    if self.plot_loadings[i]['uniform_full_load_fx'][0] >=0:
-                        color = 'blue'
-                        rect = Polygon(vertices, closed=True, fill=True, alpha = 0.2, color = color)
+                    if self.plot_loadings[i]["uniform_full_load_fx"][0] >= 0:
+                        color = "blue"
+                        rect = Polygon(
+                            vertices, closed=True, fill=True, alpha=0.2, color=color
+                        )
                         ax.add_patch(rect)
-                        string = '+' + str(round(self.plot_loadings[i]['uniform_full_load_fx'][0],2)) + ', RT'
-                        ax.annotate(string, (x[1] - scale/5*4, (y[0] + y[1])/2), zorder = 10, c = 'b')
+                        string = (
+                            "+"
+                            + str(
+                                round(
+                                    self.plot_loadings[i]["uniform_full_load_fx"][0], 2
+                                )
+                            )
+                            + ", RT"
+                        )
+                        ax.annotate(
+                            string,
+                            (x[1] - scale / 5 * 4, (y[0] + y[1]) / 2),
+                            zorder=10,
+                            c="b",
+                        )
                     else:
-                        color = 'red' 
-                        rect = Polygon(vertices, closed=True, fill=True, alpha = 0.2, color = color)
+                        color = "red"
+                        rect = Polygon(
+                            vertices, closed=True, fill=True, alpha=0.2, color=color
+                        )
                         ax.add_patch(rect)
-                        string = str(round(self.plot_loadings[i]['uniform_full_load_fx'][0],2)) + ', RT'
-                        ax.annotate(string, (x[1] - scale/5*4, (y[0] + y[1])/2), zorder = 10, c = 'b')
+                        string = (
+                            str(
+                                round(
+                                    self.plot_loadings[i]["uniform_full_load_fx"][0], 2
+                                )
+                            )
+                            + ", RT"
+                        )
+                        ax.annotate(
+                            string,
+                            (x[1] - scale / 5 * 4, (y[0] + y[1]) / 2),
+                            zorder=10,
+                            c="b",
+                        )
 
                 # For Point Load perpendicular to beam axis TODO
-                if self.plot_loadings[i]['point_load']:
+                if self.plot_loadings[i]["point_load"]:
                     # print(self.plot_loadings[i]['point_load'])
                     # print(len(self.plot_loadings[i]['point_load']))
-                    for j in range(0,len(self.plot_loadings[i]['point_load'])):
-                        length = ((x[1] - x[0])**2 + (y[1] - y[0])**2)**(0.5)
+                    for j in range(0, len(self.plot_loadings[i]["point_load"])):
+                        length = ((x[1] - x[0]) ** 2 + (y[1] - y[0]) ** 2) ** (0.5)
                         c = (x[1] - x[0]) / length
                         s = (y[1] - y[0]) / length
-                        x_pl = x[0] + self.plot_loadings[i]['point_load'][j][1] * c
-                        y_pl = y[0] + self.plot_loadings[i]['point_load'][j][1] * s
-                        u = x[0] + self.plot_loadings[i]['point_load'][j][1] * c
-                        v = y[0] + self.plot_loadings[i]['point_load'][j][1] * s + scale
-                        ax.quiver(x_pl,y_pl + scale,0,-scale,angles='xy', scale_units='xy', scale=1, headwidth = headwidth, headlength = headlength, headaxislength = headaxislength, width = width)
-                        ax.annotate(round(self.plot_loadings[i]['point_load'][j][0],2), (u, v), c='red')
+                        x_pl = x[0] + self.plot_loadings[i]["point_load"][j][1] * c
+                        y_pl = y[0] + self.plot_loadings[i]["point_load"][j][1] * s
+                        u = x[0] + self.plot_loadings[i]["point_load"][j][1] * c
+                        v = y[0] + self.plot_loadings[i]["point_load"][j][1] * s + scale
+                        ax.quiver(
+                            x_pl,
+                            y_pl + scale,
+                            0,
+                            -scale,
+                            angles="xy",
+                            scale_units="xy",
+                            scale=1,
+                            headwidth=headwidth,
+                            headlength=headlength,
+                            headaxislength=headaxislength,
+                            width=width,
+                        )
+                        ax.annotate(
+                            round(self.plot_loadings[i]["point_load"][j][0], 2),
+                            (u, v),
+                            c="red",
+                        )
 
-
-        ax.axis('equal')
+        ax.axis("equal")
         plt.show()
