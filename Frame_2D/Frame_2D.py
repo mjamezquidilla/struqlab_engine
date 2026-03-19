@@ -1,7 +1,10 @@
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Arc, Polygon, RegularPolygon
 from numpy import radians as rad
+from numpy.typing import NDArray
 
 # plt.style.use('fivethirtyeight')
 # plt.rcParams['hatch.color'] = 'white'
@@ -17,60 +20,66 @@ from numpy import radians as rad
 class Member_2D:
     def __init__(
         self,
-        area,
-        elasticity,
-        inertia,
-        nodes={},
-        member_number=None,
-        moment_release=[0, 0],
-        no_of_divs=11,
+        area: float,
+        elasticity: float,
+        inertia: float,
+        nodes: dict[int, list[float]] = {},
+        member_number: Optional[int] = None,
+        moment_release: list[int] = [0, 0],
+        no_of_divs: int = 11,
     ):
-        self.member_number: int = member_number
-        self.area: float = area
-        self.inertia: float = inertia
-        self.elasticity: float = elasticity
+        self.member_number = member_number
+        self.area = area
+        self.inertia = inertia
+        self.elasticity = elasticity
 
-        self.moment_release_left: int = moment_release[0]
-        self.moment_release_right: int = moment_release[1]
-        self.no_of_divs: int = no_of_divs
-        self.points_of_interest: list = []
-        self.uniform_full_load: list = []
-        self.point_load: list = []
-        self.uniform_axial_load: list = []
-        self.self_weight: list = []
-        self.uniform_full_load_fx: list = []
-        self.uniform_full_load_fy: list = []
+        self.moment_release_left = moment_release[0]
+        self.moment_release_right = moment_release[1]
+        self.no_of_divs = no_of_divs
+        self.points_of_interest: list[float] = []
+        self.uniform_full_load: list[float] = []
+        self.point_load: list[list[float]] = []
+        self.uniform_axial_load: list[float] = []
+        self.self_weight: list[float] = []
+        self.uniform_full_load_fx: list[float] = []
+        self.uniform_full_load_fy: list[float] = []
 
         # Check if nodes dictionary is not empty
         if nodes:
             self.nodes = nodes
-            self.node_list = []
+            self.node_list: list[int] = []
             for node in nodes:
                 self.node_list.append(node)
 
             # compute length of member
-            coordinates = []
+            coordinates: list[list[float]] = []
             for node in nodes:
                 coordinates.append(nodes[node])
             x1 = coordinates[0][0]
             y1 = coordinates[0][1]
             x2 = coordinates[1][0]
             y2 = coordinates[1][1]
-            self.length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+            self.length: float = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
             # create empty force vectors for each node
-            self.forces = {}
+            self.forces: dict[int, list[float]] = {}
             for node in nodes:
                 self.forces.update({node: [0, 0, 0]})
 
             # Create Shear and Moment numpy arrays
             self.division_spacing = self.length / no_of_divs
-            self.x_array = np.linspace(
+            self.x_array: NDArray[np.float64] = np.linspace(
                 0, self.length, int(np.ceil(self.length) / self.division_spacing)
             )
-            self.axial = np.zeros(int(np.ceil(self.length) / self.division_spacing))
-            self.shear = np.zeros(int(np.ceil(self.length) / self.division_spacing))
-            self.moment = np.zeros(int(np.ceil(self.length) / self.division_spacing))
+            self.axial: NDArray[np.float64] = np.zeros(
+                int(np.ceil(self.length) / self.division_spacing)
+            )
+            self.shear: NDArray[np.float64] = np.zeros(
+                int(np.ceil(self.length) / self.division_spacing)
+            )
+            self.moment: NDArray[np.float64] = np.zeros(
+                int(np.ceil(self.length) / self.division_spacing)
+            )
 
             # Plotting Member Releases
             self.__Release_Node_Coordinates()
@@ -96,9 +105,12 @@ class Member_2D:
         self.axial = np.zeros(len(self.x_array))
         self.shear = np.zeros(len(self.x_array))
         self.moment = np.zeros(len(self.x_array))
+
         # Recompute the axial, moment and shear values based on new x_array
         for p in self.point_load:
-            self.Add_Load_Point(p[0], p[1])
+            P = p[0]
+            a = p[1]
+            self.Add_Load_Point(P, a)
 
         for w in self.uniform_full_load:
             self.Add_Load_Full_Uniform(w, False)
@@ -196,7 +208,7 @@ class Member_2D:
 
         self.__Release_Node_Coordinates()
 
-    def Add_Load_Axial_Uniform(self, w, skip_part=False):  # OKAY!
+    def Add_Load_Axial_Uniform(self, w: float, skip_part=False):
         L = self.length
         beginning_axial = w * L / 2
         end_axial = w * L / 2
@@ -215,7 +227,7 @@ class Member_2D:
             if w not in self.uniform_axial_load:
                 self.uniform_axial_load.append(w)
 
-    def Add_Self_Weight(self, unit_weight):  # OKAY!
+    def Add_Self_Weight(self, unit_weight: float):
         w = unit_weight * self.area
 
         nodes = self.nodes
@@ -231,19 +243,6 @@ class Member_2D:
         c = (x2 - x1) / L
         s = (y2 - y1) / L
 
-        # if x2 >= x1 and y2 >= y1: # 1st quadrant
-        #     w1 = w * c
-        #     w2 = -w * s
-        # elif x2 <= x1 and y2 >= y1: # 2nd quadrant
-        #     w1 = w * c
-        #     w2 = -w * s
-        # elif x2 <= x1 and y2 <= y1: # 3rd quadrant
-        #     w1 = -w * c
-        #     w2 = w * s
-        # else: # 4th quadrant
-        #     w1 = w * c
-        #     w2 = -w * s
-
         w1 = w * c
         w2 = -w * s
 
@@ -253,7 +252,7 @@ class Member_2D:
         if unit_weight not in self.self_weight:
             self.self_weight.append(unit_weight)
 
-    def Add_Load_Full_Uniform_Fy(self, w):  # OKAY!
+    def Add_Load_Full_Uniform_Fy(self, w: float):
         nodes = self.nodes
         coordinates = []
         for node in nodes:
@@ -276,7 +275,7 @@ class Member_2D:
         if w not in self.uniform_full_load_fy:
             self.uniform_full_load_fy.append(w)
 
-    def Add_Load_Full_Uniform_Fx(self, w):  # OKAY!
+    def Add_Load_Full_Uniform_Fx(self, w: float):
         nodes = self.nodes
         coordinates = []
         for node in nodes:
@@ -286,16 +285,6 @@ class Member_2D:
         x2 = coordinates[1][0]
         y2 = coordinates[1][1]
         L = self.length
-
-        # if x2 <= x1 and y2 <= y1:
-        #     x2new = x1
-        #     x1new = x2
-        #     x2 = x2new
-        #     x1 = x1new
-        #     y2new = y1
-        #     y1new = y2
-        #     y2 = y2new
-        #     y1 = y1new
 
         c = (x2 - x1) / L
         s = (y2 - y1) / L
@@ -309,7 +298,7 @@ class Member_2D:
         if w not in self.uniform_full_load_fx:
             self.uniform_full_load_fx.append(w)
 
-    def Add_Load_Point(self, P, a):  # OKAY
+    def Add_Load_Point(self, P: float, a: float):
         L = self.length
         beginning_moment = P * (L - a) ** 2 * a / L**2
         end_moment = -P * a**2 * (L - a) / L**2
@@ -369,7 +358,7 @@ class Member_2D:
             self.points_of_interest.append(a)
             self.point_load.append([P, a])
 
-    def Add_Load_Full_Uniform(self, w, skip_part=False):  # OKAY!
+    def Add_Load_Full_Uniform(self, w: float, skip_part=False):  # OKAY!
         L = self.length
 
         beginning_moment = w * L**2 / 12
@@ -452,7 +441,7 @@ class Member_2D:
     #     self.moment += moment_values
 
     def Add_Load_Partial_Uniform(
-        self, w, a, b
+        self, w: float, a: float, b: float
     ):  # TODO Recheck values for all quadrants
         L = self.length
         beginning_moment = w * L**2 / 12 * (
@@ -523,7 +512,9 @@ class Member_2D:
 
         self.moment += moment_values
 
-    def Plot_Axial_Diagram(self, figure_size=[10, 5], show_annoation=True):  # OKAY
+    def Plot_Axial_Diagram(
+        self, figure_size: list[float] = [10, 5], show_annoation: bool = True
+    ):  # OKAY
 
         x_array_relative = self.x_array / np.ceil(self.length)
 
@@ -546,7 +537,9 @@ class Member_2D:
         plt.show()
 
     # Plot Shear Diagram
-    def Plot_Shear_Diagram(self, figure_size=[10, 5], show_annotation=True):
+    def Plot_Shear_Diagram(
+        self, figure_size: list[float] = [10, 5], show_annotation: bool = True
+    ):
 
         x_array_relative = self.x_array / np.ceil(self.length)
 
@@ -570,7 +563,9 @@ class Member_2D:
         plt.show()
 
     # Plot Moment Diagram
-    def Plot_Moment_Diagram(self, figure_size=[10, 5], show_annotation=True):
+    def Plot_Moment_Diagram(
+        self, figure_size: list[float] = [10, 5], show_annotation: bool = True
+    ):
 
         x_array_relative = self.x_array / np.ceil(self.length)
 
@@ -593,7 +588,7 @@ class Member_2D:
         plt.tight_layout()
         plt.show()
 
-    def Resolve_Forces_into_Components(self):  # OKAY!
+    def _Resolve_Forces_into_Components(self):
         self.Compile_Member_Forces()
         # solve for angle
         nodes = self.nodes
@@ -652,7 +647,7 @@ class Member_2D:
             self.resolved_forces[self.node_list[0]][2] = -M_1
             self.resolved_forces[self.node_list[1]][2] = -M_2
 
-    def Reaction_Add_Shear_At_Left_Support(self, shear):  # OKAY
+    def _Reaction_Add_Shear_At_Left_Support(self, shear: float):
         shear_values = self.x_array.copy()
         for index, _ in enumerate(shear_values):
             shear_values[index] = shear
@@ -663,19 +658,21 @@ class Member_2D:
             moment_values[index] = -shear * moment_value
         self.moment += moment_values
 
-    def Reaction_Add_Moment_At_Left_Support(self, moment):  # OKAY
+    def _Reaction_Add_Moment_At_Left_Support(self, moment: float):
         moment_values = self.x_array.copy()
         for index, _ in enumerate(moment_values):
             moment_values[index] = moment
         self.moment += moment_values
 
-    def Reaction_Add_Axial_At_Left_Support(self, axial):  # OKAY
+    def _Reaction_Add_Axial_At_Left_Support(self, axial: float):
         axial_values = self.x_array.copy()
         for index, _ in enumerate(axial_values):
             axial_values[index] = axial
         self.axial += axial_values
 
-    def Plot_Diagrams(self, figure_size=[15, 10], show_annotation=True):  # OKAY
+    def Plot_Diagrams(
+        self, figure_size: list[float] = [15, 10], show_annotation: bool = True
+    ):
         fig, axs = plt.subplots(3, 1)
         fig.set_figheight(figure_size[0])
         fig.set_figwidth(figure_size[1])
@@ -729,7 +726,7 @@ class Member_2D:
         plt.tight_layout()
         plt.show()
 
-    def Summary(self):  # OKAY
+    def Summary(self):
         self.moment_max = -np.max(self.moment)
         self.moment_min = -np.min(self.moment)
         self.moment_at_left = -self.moment[0]
@@ -756,19 +753,7 @@ class Member_2D:
         print("Minimum Moment: {}".format(self.moment_min))
         print("Maximum Moment: {}".format(self.moment_max))
 
-    def Assemble_Plot_Loadings(self):
-        self.nodes
-        self.member_number
-
-        # Loadings
-        self.points_of_interest
-        self.uniform_full_load
-        self.point_load
-        self.uniform_axial_load
-        self.self_weight
-        self.uniform_full_load_fx
-        self.uniform_full_load_fy
-
+    def _Assemble_Plot_Loadings(self):
         # Assemble nodes and loadings into a dictionary
         plot_loadings = {
             self.member_number: {
@@ -885,13 +870,13 @@ class Frame_2D:
                     member's cross-sectional area. Member's name/mark followed by its cross-sectional area
 
         """
-        self.nodes = {}
-        self.elements = {}
-        self.supports = {}
-        self.forces = {}
-        self.elasticities = {}
-        self.areas = {}
-        self.inertias = {}
+        self.nodes: dict[int, list[float]] = {}
+        self.elements: dict[int, list[int]] = {}
+        self.supports: dict[int, list[float]] = {}
+        self.forces: dict[int, list[float]] = {}
+        self.elasticities: dict[int, list[float]] = {}
+        self.areas: dict[int, list[float]] = {}
+        self.inertias: dict[int, list[float]] = {}
         self.plot_loadings = {}
         self.members = {}
 
@@ -947,8 +932,8 @@ class Frame_2D:
         for member in members_list:
             local_member_forces.append([v for v in member.forces.values()])
 
-        __local_member_forces_dict = {
-            key: [0, 0, 0, 0, 0, 0] for key in range(1, len(local_member_forces) + 1)
+        __local_member_forces_dict: dict[int, np.ndarray] = {
+            key: np.zeros(6) for key in range(1, len(local_member_forces) + 1)
         }
         for i, force in enumerate(local_member_forces):
             __local_member_forces_dict.update(
@@ -967,7 +952,7 @@ class Frame_2D:
             )
 
         # Compile all load forces
-        forces = {key: [0, 0, 0] for key in nodes}
+        forces: dict[int, list[float]] = {key: [0, 0, 0] for key in nodes}
         for member in members_list:
             member.Resolve_Forces_into_Components()
             member_forces_temp = member.resolved_forces
@@ -1577,11 +1562,11 @@ class Frame_2D:
         areas = self.areas
         moment_releases_coordinates = self.moment_releases_coordinates
 
-        average_area = []
+        average_area_list: list[list[float]] = []
         for area in areas:
-            average_area.append(areas[area])
-        average_area = np.array(average_area)
-        average_area = np.average(average_area)
+            average_area_list.append(areas[area])
+        average_area_nparray: NDArray = np.array(average_area_list)
+        average_area = np.float64(np.average(average_area_nparray))
 
         plt.figure(figsize=figure_size)
         plt.grid(grid)
@@ -1603,7 +1588,7 @@ class Frame_2D:
                 marker="o",
                 color="black",
                 zorder=5,
-                linewidth=linewidth * areas[element] / average_area,
+                linewidth=linewidth * np.array(areas[element]) / average_area,
                 markersize=node_size,
             )
 
@@ -1628,7 +1613,7 @@ class Frame_2D:
 
         for node in nodes:
             ax.annotate(
-                node,
+                str(node),
                 (nodes[node][0] + offset, nodes[node][1] + offset),
                 zorder=10,
                 c="black",
@@ -1648,7 +1633,9 @@ class Frame_2D:
                 + min(from_point[1], to_point[1]),
             ]
 
-            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder=10, c="b")
+            ax.annotate(
+                str(element), (middlePoint[0], middlePoint[1]), zorder=10, c="b"
+            )
 
         # plotting force vectors
         # loop all x-direction forces
@@ -1888,10 +1875,12 @@ class Frame_2D:
                 + min(from_point[1], to_point[1]),
             ]
 
-            plt.annotate(element, (middlePoint[0], middlePoint[1]), zorder=10, c="b")
+            plt.annotate(
+                str(element), (middlePoint[0], middlePoint[1]), zorder=10, c="b"
+            )
 
-        plt.gca().axes.get_xaxis().set_visible(False)
-        plt.gca().axes.get_yaxis().set_visible(False)
+        plt.gca().xaxis.set_visible(False)
+        plt.gca().yaxis.set_visible(False)
         plt.axis("equal")
         plt.show()
 
@@ -2036,7 +2025,7 @@ class Frame_2D:
                 marker="o",
                 color="black",
                 zorder=5,
-                linewidth=linewidth * areas[element] / average_area,
+                linewidth=linewidth * np.array(areas[element]) / average_area,
                 markersize=node_size,
             )
 
@@ -2061,7 +2050,7 @@ class Frame_2D:
 
         for node in nodes:
             ax.annotate(
-                node,
+                str(node),
                 (nodes[node][0] + offset, nodes[node][1] + offset),
                 zorder=10,
                 c="black",
@@ -2350,7 +2339,7 @@ class Frame_2D:
                 marker="o",
                 color="black",
                 zorder=5,
-                linewidth=linewidth * areas[element] / average_area,
+                linewidth=linewidth * np.array(areas[element]) / average_area,
                 markersize=node_size,
             )
             middlePoint = [
@@ -2359,7 +2348,9 @@ class Frame_2D:
                 abs((to_point[1] - from_point[1]) / 2)
                 + min(from_point[1], to_point[1]),
             ]
-            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder=10, c="b")
+            ax.annotate(
+                str(element), (middlePoint[0], middlePoint[1]), zorder=10, c="b"
+            )
 
         for member in self.members_list:
             x = []
@@ -2405,7 +2396,7 @@ class Frame_2D:
                 x_final,
                 y_final,
                 "b-",
-                linewidth=linewidth * areas[element] / average_area,
+                linewidth=linewidth * np.array(areas[member]) / average_area,
             )
 
             moment = np.insert(member.moment, 0, x[0])
@@ -2485,7 +2476,7 @@ class Frame_2D:
                 marker="o",
                 color="black",
                 zorder=5,
-                linewidth=linewidth * areas[element] / average_area,
+                linewidth=linewidth * np.array(areas[element]) / average_area,
                 markersize=node_size,
             )
             middlePoint = [
@@ -2494,7 +2485,9 @@ class Frame_2D:
                 abs((to_point[1] - from_point[1]) / 2)
                 + min(from_point[1], to_point[1]),
             ]
-            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder=10, c="b")
+            ax.annotate(
+                str(element), (middlePoint[0], middlePoint[1]), zorder=10, c="b"
+            )
 
         for member in self.members_list:
             x = []
@@ -2540,7 +2533,7 @@ class Frame_2D:
                 x_final,
                 y_final,
                 "m-",
-                linewidth=linewidth * areas[element] / average_area,
+                linewidth=linewidth * np.array(areas[member]) / average_area,
             )
 
             shear = np.insert(member.shear, 0, x[0])
@@ -2620,7 +2613,7 @@ class Frame_2D:
                 marker="o",
                 color="black",
                 zorder=5,
-                linewidth=linewidth * areas[element] / average_area,
+                linewidth=linewidth * np.array(areas[element]) / average_area,
                 markersize=node_size,
             )
             middlePoint = [
@@ -2629,7 +2622,9 @@ class Frame_2D:
                 abs((to_point[1] - from_point[1]) / 2)
                 + min(from_point[1], to_point[1]),
             ]
-            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder=10, c="b")
+            ax.annotate(
+                str(element), (middlePoint[0], middlePoint[1]), zorder=10, c="b"
+            )
 
         for member in self.members_list:
             x = []
@@ -2675,7 +2670,7 @@ class Frame_2D:
                 x_final,
                 y_final,
                 "r-",
-                linewidth=linewidth * areas[element] / average_area,
+                linewidth=linewidth * np.array(areas[member]) / average_area,
             )
 
             axial = np.insert(member.axial, 0, x[0])
@@ -2780,7 +2775,7 @@ class Frame_2D:
                 marker="o",
                 color="black",
                 zorder=5,
-                linewidth=linewidth * areas[element] / average_area,
+                linewidth=linewidth * np.array(areas[element]) / average_area,
                 markersize=node_size,
             )
 
@@ -2805,7 +2800,7 @@ class Frame_2D:
 
         for node in nodes:
             ax.annotate(
-                node,
+                str(node),
                 (nodes[node][0] + offset, nodes[node][1] + offset),
                 zorder=10,
                 c="black",
@@ -2825,7 +2820,9 @@ class Frame_2D:
                 + min(from_point[1], to_point[1]),
             ]
 
-            ax.annotate(element, (middlePoint[0], middlePoint[1]), zorder=10, c="b")
+            ax.annotate(
+                str(element), (middlePoint[0], middlePoint[1]), zorder=10, c="b"
+            )
 
         # Plot Member Release Coordinates
         for member_release in moment_releases_coordinates:
