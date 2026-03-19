@@ -36,17 +36,17 @@ def Frame_builder(
     Sample Usage
     ============
 
-    Partial Example 1:
+    # Partial Example 1: Concrete Frame 1
     columns, beams, supports = Frame_builder(x_spacing=[6,8,6], # Define center-to-center spacing along x-axis
-                y_spacing=[3.5, 3.5], # Define center-to-center spacing along y-axis
-                cls_beams=Member_2D, # Use Frame_2D's Member_2D class or inherited class.
-                cls_columns=Member_2D, # Use Frame_2D's Member_2D class or inherited class
-                cls_beams_kwargs={'area': B_area, 'inertia': B_I, 'elasticity': B_E}, # __init__ properties of cls_beam.
-                cls_column_kwargs={'area': C_area, 'inertia': C_I, 'elasticity': C_E}) # __init__ properties of cls_column.
+                                y_spacing=[3.5, 3.5], # Define center-to-center spacing along y-axis
+                                cls_beams=Member_2D, # Use Frame_2D's Member_2D class or inherited class.
+                                cls_columns=Member_2D, # Use Frame_2D's Member_2D class or inherited class
+                                cls_beams_kwargs={'area': B_area, 'inertia': B_I, 'elasticity': B_E}, # __init__ properties of cls_beam.
+                                cls_column_kwargs={'area': C_area, 'inertia': C_I, 'elasticity': C_E}) # __init__ properties of cls_column.
 
-    Full Example 1: Concrete Frame
+    # Full Example 1: Concrete Frame 1
 
-    '''python
+    ```python
     from struqlab_engine.Frame_2D.Frame_2D import Frame_2D, Member_2D
     from struqlab_engine.Frame_2D.Frame_2D_builders import Frame_builder
 
@@ -66,11 +66,11 @@ def Frame_builder(
 
     #### USAGE OF MODULE ####
     columns, beams, supports = Frame_builder(x_spacing=[6,8,6], # Define center-to-center spacing along x-axis
-                y_spacing=[3.5, 3.5], # Define center-to-center spacing along y-axis
-                cls_beams=Member_2D, # Use Frame_2D's Member_2D class or inherited class.
-                cls_columns=Member_2D, # Use Frame_2D's Member_2D class or inherited class
-                cls_beams_kwargs={'area': B_area, 'inertia': B_I, 'elasticity': B_E}, # __init__ properties of cls_beam.
-                cls_column_kwargs={'area': C_area, 'inertia': C_I, 'elasticity': C_E}) # __init__ properties of cls_column.
+                                            y_spacing=[3.5, 3.5], # Define center-to-center spacing along y-axis
+                                            cls_beams=Member_2D, # Use Frame_2D's Member_2D class or inherited class.
+                                            cls_columns=Member_2D, # Use Frame_2D's Member_2D class or inherited class
+                                            cls_beams_kwargs={'area': B_area, 'inertia': B_I, 'elasticity': B_E}, # __init__ properties of cls_beam.
+                                            cls_column_kwargs={'area': C_area, 'inertia': C_I, 'elasticity': C_E}) # __init__ properties of cls_column.
     #### USAGE OF MODULE ####
 
     # You can use for loops to quickly add loads per beam or column based on Member_2D's API
@@ -89,7 +89,7 @@ def Frame_builder(
     F1.Draw_Axial_Diagram(figure_size=[10,5],show_labels=True, dpi=300, scale_factor=50)
     F1.Draw_Shear_Diagram(figure_size=[10,5],show_labels=True, dpi=300, scale_factor=50)
     F1.Draw_Moment_Diagram(figure_size=[10,5],show_labels=True, dpi=300, scale_factor=50)
-    '''
+    ```
     """
 
     # For Columns
