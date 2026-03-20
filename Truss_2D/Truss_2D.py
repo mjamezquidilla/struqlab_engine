@@ -485,7 +485,7 @@ class Truss_2D:
         supports = self.supports
         forces = self.forces
 
-        # plt.figure(figsize = figure_size)
+        plt.figure(figsize=figure_size)
         plt.grid(grid)
 
         ax = plt.gca()
@@ -673,7 +673,7 @@ class Truss_2D:
         return displacements_dict
 
     def Draw_Truss_Displacements(
-        self, linewidth=2, magnification_factor=100, offset=0.12
+        self, figure_size=None, linewidth=2, magnification_factor=100, offset=0.12
     ):
         """
         Draws the Truss displacements after solving the truss
@@ -706,7 +706,7 @@ class Truss_2D:
                 )
                 new_nodes.update({node: [x_dist, y_dist]})
 
-        # plt.figure(figsize = figure_size)
+        plt.figure(figsize=figure_size)
         ax = plt.gca()
         ax.set_aspect(aspect="equal")
 
@@ -842,7 +842,7 @@ class Truss_2D:
         s_map = cm.ScalarMappable(norm=normalize, cmap=colormap)
         s_map.set_array(colorparams)
 
-        # plt.figure(figsize = figure_size)
+        plt.figure(figsize=figure_size)
         plt.grid(grid)
 
         ax = plt.gca()
@@ -945,7 +945,7 @@ class Truss_2D:
         s_map = cm.ScalarMappable(norm=normalize, cmap=colormap)
         s_map.set_array(colorparams)
 
-        # plt.figure(figsize = figure_size)
+        plt.figure(figsize=figure_size)
         plt.grid(grid)
 
         ax = plt.gca()
@@ -987,7 +987,7 @@ class Truss_2D:
                 ax.scatter(x, y, marker="o", s=200, c=force_color, zorder=2)
 
         # plotting member labels
-        if show_member_label == True:
+        if show_member_label:
             for element in elements:
                 fromNode = elements[element][0]
                 toNode = elements[element][1]
@@ -1051,7 +1051,7 @@ class Truss_2D:
         forces = self.forces
         reactions = self.reactions_
 
-        # plt.figure(figsize = figure_size)
+        plt.figure(figsize=figure_size)
         plt.grid(grid)
         ax = plt.gca()
 
@@ -1114,7 +1114,7 @@ class Truss_2D:
 
         # plotting force vectors
         # loop all x-direction forces
-        if show_ext_forces == True:
+        if show_ext_forces:
             for force in forces:
                 x = nodes[force][0]
                 y = nodes[force][1]
@@ -1309,4 +1309,3 @@ class Truss_2D:
                 else:
                     self.self_weight[key] = np.round(value, 2)
         self.forces = self.self_weight
-
