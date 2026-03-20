@@ -16,6 +16,26 @@ def Frame_builder(
     """
     Frame Builder for struqlab_engine's Frame 2D class. Creates a Classic Rectangular Rigid Frame.
 
+    ```text
+                |-----------|---------------|-------------------|---------------|
+                |           |               |                   |               |
+           h3   |           |               |                   |               |
+                |           |               |                   |               |
+                |-----------|---------------|-------------------|---------------|
+                |           |               |                   |               |
+                |           |               |                   |               |
+           h2   |           |               |                   |               |
+                |           |               |                   |               |
+                |           |               |                   |               |
+                |-----------|---------------|-------------------|---------------|
+                |           |               |                   |               |
+                |           |               |                   |               |
+           h1   |           |               |                   |               |
+                |           |               |                   |               |
+                |           |               |                   |               |
+                 <---x1----> <------x2-----> <--------x3-------> <------x4----->
+    ```
+
     Parameters
     ==========
 
@@ -36,7 +56,8 @@ def Frame_builder(
     Sample Usage
     ============
 
-    # Partial Example 1: Concrete Frame 1
+    Partial Example 1: Concrete Frame 1
+    -------------------------------------
     columns, beams, supports = Frame_builder(x_spacing=[6,8,6], # Define center-to-center spacing along x-axis
                                 y_spacing=[3.5, 3.5], # Define center-to-center spacing along y-axis
                                 cls_beams=Member_2D, # Use Frame_2D's Member_2D class or inherited class.
@@ -44,7 +65,8 @@ def Frame_builder(
                                 cls_beams_kwargs={'area': B_area, 'inertia': B_I, 'elasticity': B_E}, # __init__ properties of cls_beam.
                                 cls_column_kwargs={'area': C_area, 'inertia': C_I, 'elasticity': C_E}) # __init__ properties of cls_column.
 
-    # Full Example 1: Concrete Frame 1
+    Full Example 1: Concrete Frame 1
+    --------------------------------
 
     ```python
     from struqlab_engine.Frame_2D.Frame_2D import Frame_2D, Member_2D
