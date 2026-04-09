@@ -2,7 +2,7 @@ import inspect
 import itertools
 from typing import Type
 
-from .Frame_2D import Member_2D
+from .Member_2D import Member_2D
 
 
 def Frame_builder(
